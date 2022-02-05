@@ -1,30 +1,30 @@
 <template>
-  <v-dialog
+  <v-navigation-drawer
     v-model="show"
-    persistent
-    fullscreen
+    width="70vw"
+    absolute
+    temporary
+    right
+    component-class="task-detail-dialog"
   >
-    <v-card>
-      <v-card-title>
-        {{taskName}}
-      </v-card-title>
-      <v-card-text>
-        <tiptap-vuetify v-model="content" :extensions="extensions"/>
-        <template #placeholder>
-          Loading...
-        </template>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn @click="onClose">
-          Close
-        </v-btn>
-        <v-btn @click="onSave" color="primary">
-          Save
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+    <v-card-title v-html="taskName">
+    </v-card-title>
+    <v-card-text>
+      <tiptap-vuetify v-model="content" :extensions="extensions"/>
+      <template #placeholder>
+        Loading...
+      </template>
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn @click="onClose">
+        Close
+      </v-btn>
+      <v-btn @click="onSave" color="primary">
+        Save
+      </v-btn>
+    </v-card-actions>
+  </v-navigation-drawer>
 </template>
 <script>
 import {
@@ -45,6 +45,9 @@ import {
   HorizontalRule,
   History
 } from 'tiptap-vuetify'
+
+import { getModule } from 'vuex-module-decorators'
+import TaskRecordStore from '~/store/TaskRecordStore'
 
 export default {
    components: { TiptapVuetify },
@@ -103,6 +106,13 @@ export default {
     }
   },
   computed: {
+    taskRecordStore() {
+      return getModule(TaskRecordStore, this.$store)
+    },
+    tasks() {
+      return this.taskRecordStore?.taskRecords || []
+    },
+
     show: {
       get () {
         return this.value
@@ -112,7 +122,11 @@ export default {
       }
     },
     taskName() {
-      return this.task?.name || ''
+      let n = `<span class="task-name">${this.task.name}</span>`
+      if(this.task.parent) {
+        n = `<span class="project-name">${this.task.parent.name}</span>` + n
+      }
+      return n
     }
   },
   watch: {
@@ -124,13 +138,33 @@ export default {
   }
 }
 </script>
-<style lang="scss">
-.tiptap-vuetify-editor {
-  .tiptap-vuetify-editor__content {
-    p {
-      margin-top: 0!important;
-      margin-bottom: 0!important;
+<style lang="scss" scoped>
+
+[component-class=task-detail-dialog] {
+  margin: 0;
+  z-index: 100;
+
+  ::v-deep {
+    .project-name {
+      margin-right: .5rem;
+      font-size: .8rem;
+      font-weight: bold;
+    }
+    .tiptap-vuetify-editor {
+      .tiptap-vuetify-editor__content {
+        height: 75vh;
+        overflow: auto;
+
+        .ProseMirror {
+          margin: .5rem!important;
+          p {
+            margin-top: 0!important;
+            margin-bottom: 0!important;
+          }
+        }
+      }
     }
   }
 }
+
 </style>
