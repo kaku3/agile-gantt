@@ -4,8 +4,6 @@ const router = require('express').Router()
 
 const TaskUtil = require('../utils/TaskUtil')
 
-console.log('router/tasks')
-
 const db = path.join(process.cwd(), 'db')
 
 router.get('/', (req, res, next) => {
