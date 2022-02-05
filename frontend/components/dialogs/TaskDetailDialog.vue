@@ -162,6 +162,7 @@ export default {
 
         .ProseMirror {
           margin: .5rem!important;
+          min-height: calc(75vh - 2rem);
           p {
             margin-top: 0!important;
             margin-bottom: 0!important;
