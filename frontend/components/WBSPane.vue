@@ -28,7 +28,52 @@
           {{ c.name }}
         </div>
       </div>
-      <div class="toolbar-button ml-auto" @click="setHorizontallPane(100)">
+      <div class="toolbar management-begin-date ml-auto">
+        <v-menu
+          ref="managementBeginDateInput"
+          v-model="managementBeginDateInput.menu"
+          :close-on-content-click="false"
+          :return-value.sync="config.managementBeginDate"
+          transition="scale-transition"
+          offset-y
+          max-width="290px"
+          min-width="auto"
+        >
+          <template v-slot:activator="{ on, attrs }">
+            <v-text-field
+              v-model="config.managementBeginDate"
+              prepend-icon="mdi-calendar"
+              readonly
+              v-bind="attrs"
+              v-on="on"
+              @change="onChangeManagementBeginDate"
+            ></v-text-field>
+          </template>
+          <v-date-picker
+            v-model="managementBeginDateInput.value"
+            type="month"
+            locale="ja-jp"
+            no-title
+          >
+            <v-spacer></v-spacer>
+            <v-btn
+              text
+              color="primary"
+              @click="onChangeManagementBeginDate(false)"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              text
+              color="primary"
+              @click="onChangeManagementBeginDate(true)"
+            >
+              OK
+            </v-btn>
+          </v-date-picker>
+        </v-menu>
+      </div>
+      <div class="toolbar-button" @click="setHorizontallPane(100)">
         <v-icon small>mdi-chart-timeline</v-icon>
         <div class="tool-name">gantt</div>
       </div>
@@ -246,6 +291,8 @@ export default Vue.extend({
     managementBeginDate.setDate(1)
     managementBeginDate.setHours(0, 0, 0, 0)
 
+    const _managementBeginDate = dateformat(managementBeginDate, 'yyyy-mm')
+
     const gridX = 5
     const timelineMaxTerm = 580
 
@@ -276,7 +323,12 @@ export default Vue.extend({
         showDialog: false
       },
       config: {
-        closeProjects: []
+        closeProjects: [],
+        managementBeginDate: _managementBeginDate
+      },
+      managementBeginDateInput : {
+        menu: false,
+        value: _managementBeginDate
       }
     }
   },
@@ -375,9 +427,18 @@ export default Vue.extend({
     async loadConfig() {
       const res = await this.$axios.get(`/accounts/${this.$auth.user.id}/config`)
       this.config = res.data
+
+      if(this.config.managementBeginDate) {
+        this.managementBeginDateInput.value = this.config.managementBeginDate
+
+        const [ yyyy, mm ] = this.managementBeginDateInput.value.split('-')
+        this.managementBeginDate.setFullYear(parseInt(yyyy))
+        this.managementBeginDate.setMonth(parseInt(mm) - 1)
+
+      }
     },
-    saveConfig() {
-      this.$axios.post(`/accounts/${this.$auth.user.id}/config`, this.config)
+    async saveConfig() {
+      await this.$axios.post(`/accounts/${this.$auth.user.id}/config`, this.config)
         .then(res => {
           console.log(res)
         })
@@ -388,6 +449,18 @@ export default Vue.extend({
       this.popup.show = true
       this.popup.text = text
     },
+
+    async onChangeManagementBeginDate(update) {
+      this.managementBeginDateInput.menu = false
+      if(update) {
+        this.config.managementBeginDate = this.managementBeginDateInput.value
+        await this.saveConfig()
+
+        // css のタイムラインを更新しないといけないので、リロードする。
+        this.$router.go({path: this.$router.currentRoute.path, force: true})
+      }
+    },
+
 
     /**
      * beginDate + (1~12)
@@ -857,7 +930,7 @@ export default Vue.extend({
       return this.tasks
         .flatMap(t => t.children)
         .filter(t => t.select)[0]
-    }
+    },
   },
   filters: {
     endDate(t) {
