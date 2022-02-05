@@ -46,6 +46,10 @@ $time-line-width: 580 * $time-grid-x;
 .wbs-pane {
   width: 100%;
 
+  header {
+    z-index: 100;
+  }
+
   .tasks-pane, .timelines-pane {
     max-height: calc(100vh - 48px);
   }
@@ -357,6 +361,15 @@ $time-line-width: 580 * $time-grid-x;
     }
     .client + .client {
       margin-left: .25rem;
+    }
+  }
+  .toolbar.management-begin-date {
+    margin-right: 1rem;
+    padding-top: 14px;
+    width: 5rem;
+
+    ::v-deep input[role=button] {
+      font-size: .8rem;
     }
   }
   .toolbar-button {
