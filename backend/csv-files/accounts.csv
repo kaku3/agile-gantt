@@ -1,0 +1,9 @@
+id,groupId,name,email,memo
+100,100,M1-0,user0@m1.example.co.jp,
+101,100,M1-1,user1@m1.example.co.jp,
+102,100,M1-2,user2@m1.example.co.jp,
+200,200,M2-0,user0@m2.example.co.jp,
+201,200,M2-1,user1@m2.example.co.jp,
+202,200,M2-2,user2@m2.example.co.jp,
+300,300,M3-0,user0@m3.example.co.jp,
+301,300,M3-1,user1@m3.example.co.jp,

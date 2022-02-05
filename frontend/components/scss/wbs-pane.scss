@@ -1,0 +1,466 @@
+$color-holiday: #F8BBD0;
+
+$color-header: #eee;
+
+$time-grid-x: 5px;
+$line-height: 24px;
+$task-height: 20px;
+$plan-height: 16px;
+$project-height: 12px;
+
+$task-margin-top: 4px;
+$task-indent-size: 16px;
+
+$time-line-width: 580 * $time-grid-x;
+
+// d : 1 - 7
+@mixin background-date-grid($d) {
+  $base-grid-colors: (#ddd #ddd #ddd #ddd #ddd #ddd #ddd);
+  $grid-colors: set-nth($base-grid-colors, $d, #888);
+
+  $sun: ($d + 6) % 7 + 1;
+  $sat: ($d + 5) % 7 + 1;
+
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent #{$time-grid-x - 1}, nth($grid-colors, 1), $time-grid-x, transparent #{$time-grid-x + 1},
+      transparent #{$time-grid-x * 2 - 1}, nth($grid-colors, 2), $time-grid-x * 2, transparent #{$time-grid-x * 2 + 1},
+      transparent #{$time-grid-x * 3 - 1}, nth($grid-colors, 3), $time-grid-x * 3, transparent #{$time-grid-x * 3 + 1},
+      transparent #{$time-grid-x * 4 - 1}, nth($grid-colors, 4), $time-grid-x * 4, transparent #{$time-grid-x * 4 + 1},
+      transparent #{$time-grid-x * 5 - 1}, nth($grid-colors, 5), $time-grid-x * 5, transparent #{$time-grid-x * 5 + 1},
+      transparent #{$time-grid-x * 6 - 1}, nth($grid-colors, 6), $time-grid-x * 6, transparent #{$time-grid-x * 6 + 1},
+      transparent #{$time-grid-x * 7 - 1}, nth($grid-colors, 7)
+    ),
+    linear-gradient(
+      90deg,
+      transparent #{$time-grid-x * $sat - $time-grid-x}, $color-holiday #{$time-grid-x * $sat - ($time-grid-x - 1)}, $color-holiday, $time-grid-x * $sat, transparent #{$time-grid-x * $sat + 1}
+    ),
+    linear-gradient(
+      90deg,
+      transparent #{$time-grid-x * $sun - $time-grid-x}, $color-holiday #{$time-grid-x * $sun - ($time-grid-x - 1)}, $color-holiday, $time-grid-x * $sun, transparent #{$time-grid-x * $sun + 1},
+    );
+}
+
+
+.wbs-pane {
+  width: 100%;
+
+  .tasks-pane, .timelines-pane {
+    max-height: calc(100vh - 48px);
+  }
+  .tasks-pane {
+    overflow: scroll;
+    &::-webkit-scrollbar {
+      width: 0;
+    }
+    .tasks-header, .tasks-container {
+      min-width: 480px;
+    }
+
+    .tasks-header {
+      position: sticky;
+      top: 0;
+      display: flex;
+      min-width: 480px;
+      z-index: 1;
+      > * {
+        padding: .25rem;
+        font-size: .7rem;
+        overflow: hidden;
+        background-color: $color-header;
+        border-bottom: 1px solid #888;
+        border-right: 1px solid #888;
+
+        &:nth-child(1) {
+          flex: 1;
+          padding: 0;
+          > *:first-child {
+            padding: .25rem;
+          }
+        }
+        &:nth-child(2) {
+          width: 4rem;
+        }
+        &:nth-child(3) {
+          width: 3rem;
+        }
+        &:nth-child(4) {
+          width: 3rem;
+        }
+        &:nth-child(5) {
+          width: 3rem;
+        }
+        &:nth-child(6) {
+          width: 3rem;
+        }
+        &:nth-child(7) {
+          width: 3rem;
+        }
+        &:nth-child(8) {
+          width: 3rem;
+        }
+      }
+    }
+    .tasks-container {
+      font-size: .8rem;
+
+      ::v-deep ol {
+        list-style-type: none;
+        padding-left: 0;
+
+        &:not(.nestable-group) {
+          padding-left: $task-indent-size;
+        }
+        .nestable-item-content {
+          position: relative;
+          height: $task-height;
+        }
+
+        ol:not(.show) {
+          display: none;
+        }
+      }
+      .task-item-select {
+        transform: translate(2px, 4px);
+      }
+
+      .nestable-handle {
+        display: inline-block;
+        height: $task-height;
+
+        background: #f8f8f8;
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+      }
+
+      .task-item {
+        position: absolute;
+        top: 0;
+        left: 40px;
+        display: flex;
+        width: calc(100% - 40px);
+        background: white;
+
+        &.project {
+          background: #B2DFDB;
+
+          &:not(.show-children) + ol {
+            display: none;
+          }
+
+          &.has-children {
+            .task-assign-rate {
+              display: none;
+            }
+          }
+        }
+
+        > * {
+          padding: .125rem .25rem;
+          text-align: center;
+          border-right: 1px solid #ddd;
+          border-bottom: 1px solid #eee;
+
+          > input {
+            width: 100%;
+            text-align: center;
+          }
+
+          &.task-info {
+            display: flex;
+            padding: 0;
+            flex: 1;
+            > input {
+              padding: .125rem .25rem;
+              text-align: left;
+            }
+            .task-info-tool {
+              cursor: pointer;
+            }
+
+            &:not(:hover) {
+              .task-info-tool {
+                display: none;
+              }
+            }
+          }
+          &:nth-child(2) {
+            cursor: pointer;
+            width: 4rem;
+          }
+          &:nth-child(3) {
+            width: 3rem;
+          }
+          &:nth-child(4) {
+            width: 3rem;
+          }
+          &:nth-child(5) {
+            width: 3rem;
+          }
+          &:nth-child(6) {
+            width: 3rem;
+          }
+          &:nth-child(7) {
+            width: 3rem;
+          }
+          &:nth-child(8) {
+            width: 3rem;
+          }
+        }
+      }
+    }
+  }
+  .timelines-pane {
+    overflow: auto;
+    .timelines-header {
+      position: sticky;
+      top: 0;
+      display: flex;
+      width: $time-line-width;
+      background: $color-header;
+      z-index: 10;
+      div {
+        padding: .25rem;
+        width: #{$time-grid-x * 30};
+        font-size: .7rem;
+        border-right: 1px solid #888;
+        border-bottom: 1px solid #888;
+      }
+    }
+
+    .timelines-container {
+      position: relative;
+      width: $time-line-width;
+
+      .today {
+        position: absolute;
+        width: 1px;
+        height: 100%;
+        background-color: #263238;
+        opacity: .7;
+        z-index: 1;
+      }
+
+      .timeline-container {
+        position: relative;
+        display: block;
+        width: $time-line-width;
+        height: $line-height;
+        border-bottom: 1px solid white;
+
+        background-repeat: repeat-x;
+        background-size: #{$time-grid-x * 7} $line-height;
+
+        @for $d from 1 through 7 {
+          &.d#{$d - 1} {
+            @include background-date-grid($d);
+          }
+        }
+
+
+        ::v-deep .timeline-item {
+          padding-top: 2px;
+
+          .handle {
+            border-color: #666;
+            border-radius: 50%;
+          }
+          .task-item {
+            padding: .1rem .25rem;
+            width: 100%;
+            height: $plan-height;
+            font-size: .7rem;
+            color: white;
+            background: #2196F3;
+            border-radius: 4px;
+
+            &.project {
+              margin-top: 4px;
+              padding: 0 .25rem;
+              font-size: .6rem;
+              color: white;
+              background: rgba(#80CBC4, .8);
+              border-bottom: 1px solid #004D40;
+              height: $project-height;
+              border-radius: 1px;
+
+              &.complete {
+                background: rgba(#004D40, .8);
+              }
+              &.advance {
+                background: rgba(#4CAF50, .8);
+              }
+              &.delay {
+                background: rgba(#FF5722, .8);
+              }
+            }
+
+            @for $c from 0 through 10 {
+              &.assign-rate-#{$c} {
+                background-color: rgba(#2196F3, ($c / 10 + 0.3));
+              }
+            }
+          }
+          .task-info {
+            display: flex;
+            position: absolute;
+            top: 1px;
+            left: calc(100% + 32px);
+            padding: 2px .2rem;
+            white-space: nowrap;
+            font-size: .7rem;
+            background: rgba(#E0F2F1, .9);
+            border-radius: 4px;
+
+            &.project {
+              background: rgba(#B2DFDB, .9);
+            }
+
+            > * + * {
+              padding-left: .5rem;
+            }
+            > .task-info-task-name {
+              padding-top: 2px;
+              font-size: .6rem;
+              font-weight: bold;
+            }
+            > .task-info-task-assignee {
+              padding-top: 1px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.v-toolbar {
+  .connect-users {
+    margin-left: 2rem;
+    .client {
+      display: inline-block;
+      padding: .25rem;
+      width: 32px;
+
+      font-size: .5rem;
+      color: white;
+      background-color: #607D8B;
+      border-radius: 100vh;
+
+      white-space: nowrap;
+      overflow: hidden;
+
+      &::first-letter {
+        font-size: 1rem;
+      }
+    }
+    .client + .client {
+      margin-left: .25rem;
+    }
+  }
+  .toolbar-button {
+    cursor: pointer;
+    margin: 0 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: .6rem;
+    text-align: center;
+
+    color: #666;
+
+    &.disabled {
+      color: #aaa;
+    }
+
+    .tool-name {
+      padding-top: .2rem;
+      height: 24px;
+      line-height: .9;
+    }
+  }
+}
+
+.resource-pane {
+  ::v-deep table {
+    tbody {
+      tr {
+        td {
+          padding: .1rem;
+          font-size: .8rem;
+          height: 24px;
+        }
+      }
+    }
+  }
+}
+
+::v-deep {
+  .nestable {
+    position: relative;
+  }
+  .nestable .nestable-list {
+    margin: 0;
+    padding: 0 0 0 $task-indent-size;
+    list-style-type: none;
+  }
+  .nestable > .nestable-list {
+    padding: 0;
+  }
+  .nestable-item,
+  .nestable-item-copy {
+    margin: $task-margin-top 0 0;
+  }
+  .nestable-item:first-child,
+  .nestable-item-copy:first-child {
+    margin-top: 0;
+  }
+  .nestable-item .nestable-list,
+  .nestable-item-copy .nestable-list {
+    margin-top: $task-margin-top;
+  }
+  .nestable-item {
+    position: relative;
+  }
+  .nestable-item.is-dragging .nestable-list {
+    pointer-events: none;
+  }
+  .nestable-item.is-dragging * {
+    opacity: 0;
+    filter: alpha(opacity=0);
+  }
+  .nestable-item.is-dragging:before {
+    content: ' ';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(106, 127, 233, 0.274);
+    border: 1px dashed rgb(73, 100, 241);
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+  }
+  .nestable-drag-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .nestable-drag-layer > .nestable-list {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 0;
+    background-color: rgba(106, 127, 233, 0.274);
+  }
+  .nestable [draggable="true"] {
+    cursor: move;
+  }
+  .nestable-handle {
+    display: inline;
+  }
+}
