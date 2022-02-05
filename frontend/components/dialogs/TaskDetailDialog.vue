@@ -122,6 +122,11 @@ export default {
       }
     },
     taskName() {
+      // mounted 時
+      if(!this.task) {
+        return ''
+      }
+
       let n = `<span class="task-name">${this.task.name}</span>`
       if(this.task.parent) {
         n = `<span class="project-name">${this.task.parent.name}</span>` + n
