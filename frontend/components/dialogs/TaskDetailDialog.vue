@@ -1,7 +1,7 @@
 <template>
   <v-navigation-drawer
     v-model="show"
-    width="70vw"
+    width="50%"
     absolute
     right
     component-class="task-detail-dialog"
