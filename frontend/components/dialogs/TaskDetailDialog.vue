@@ -50,7 +50,7 @@ import { getModule } from 'vuex-module-decorators'
 import TaskRecordStore from '~/store/TaskRecordStore'
 
 export default {
-   components: { TiptapVuetify },
+  components: { TiptapVuetify },
   props: {
     value: Boolean,
     task: Object

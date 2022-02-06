@@ -40,7 +40,7 @@ http://localhost:3000 にアクセス
 - release 版
 
 ```
-# env.production.js を適切に修正。
+# env.development.js をコピーして env.production.js を作成し適切に修正。
 npm generate # 実行ファイルを dist/ に生成
 npm start # サーバ実行
 ```
