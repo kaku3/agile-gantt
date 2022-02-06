@@ -138,6 +138,11 @@ export default {
       if(v) {
         this.load()
       }
+    },
+    task(v, ov) {
+      if(v?.id !== ov?.id) {
+        this.load()
+      }
     }
   }
 }
