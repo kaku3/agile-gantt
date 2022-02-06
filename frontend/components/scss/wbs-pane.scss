@@ -47,7 +47,7 @@ $time-line-width: 580 * $time-grid-x;
   width: 100%;
 
   header {
-    z-index: 100;
+    z-index: 6;
   }
 
   .tasks-pane, .timelines-pane {
@@ -223,7 +223,7 @@ $time-line-width: 580 * $time-grid-x;
       display: flex;
       width: $time-line-width;
       background: $color-header;
-      z-index: 10;
+      z-index: 5;
       div {
         padding: .25rem;
         width: #{$time-grid-x * 30};
