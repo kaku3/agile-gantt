@@ -3,7 +3,6 @@
     v-model="show"
     width="70vw"
     absolute
-    temporary
     right
     component-class="task-detail-dialog"
   >
