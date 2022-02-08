@@ -15,12 +15,8 @@
       </template>
     </v-card-text>
     <v-card-actions>
-      <v-spacer></v-spacer>
       <v-btn @click="onClose">
         Close
-      </v-btn>
-      <v-btn @click="onSave" color="primary">
-        Save
       </v-btn>
     </v-card-actions>
   </v-navigation-drawer>
@@ -92,14 +88,16 @@ export default {
       await this.save()
       this.show = false
     },
-    async load () {
-      console.log(this.task)
-
-      const { data } = await this.$axios.get(`/tasks/${this.task.id}`)
-      this.content = data.content
+    async load (id) {
+      console.log(`+ load(${id})`)
+      const { data } = await this.$axios.get(`/tasks/${id}`)
+      this.$nextTick(() => {
+        this.content = data.content
+      })
     },
-    async save() {
-      await this.$axios.post(`/tasks/${this.task.id}`, {
+    async save(id) {
+      console.log(`+ save(${id})`)
+      await this.$axios.post(`/tasks/${id}`, {
         content: this.content
       })
     }
@@ -136,12 +134,17 @@ export default {
   watch: {
     show(v, ov) {
       if(v) {
-        this.load()
+        this.load(this.task.id)
       }
     },
-    task(v, ov) {
+    async task(v, ov) {
       if(v?.id !== ov?.id) {
-        this.load()
+        console.log(this.content)
+        await this.save(ov.id)
+        this.$nextTick(() => {
+          console.log('+ load')
+          this.load(v.id)
+        })
       }
     }
   }
