@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-navigation-drawer
-      expand-on-hover
+      mini-variant
       fixed
       app
     >
@@ -13,15 +13,24 @@
           Gantt
         </v-list-item-content>
       </v-list-item>
-      <v-list-item to="/settings">
+      <v-divider></v-divider>
+      <v-list-item v-for="(o, i) in enabledPlugins" :key="i" @click="open(o)">
         <v-list-item-action>
-          <v-icon>mdi-cog</v-icon>
+          <v-icon>{{o.icon}}</v-icon>
         </v-list-item-action>
         <v-list-item-content>
-          Settings
+          {{o.name}}
         </v-list-item-content>
       </v-list-item>
       <template v-slot:append>
+        <v-list-item to="/settings">
+          <v-list-item-action>
+            <v-icon>mdi-cog</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            Settings
+          </v-list-item-content>
+        </v-list-item>
         <div v-if="$auth.loggedIn">
           <v-list-item to="/account">
             <v-list-item-action>
@@ -51,18 +60,47 @@
 </template>
 
 <script>
+import { getModule } from 'vuex-module-decorators'
+import ConfigStore from '~/store/ConfigStore'
+import { PLUGINS } from '~/models/Config'
+
 export default {
   data () {
     return {
     }
   },
   methods: {
+    open(o) {
+      window.open(o.url, o.icon)
+    },
     async onLogout() {
       await this.$auth.logout()
       this.$router.replace('/login')
     }
   },
   computed: {
+    configStore() {
+      return getModule(ConfigStore, this.$store)
+    },
+    config() {
+      return this.configStore?.config
+    },
+    plugins() {
+      const plugins = [ ...PLUGINS ]
+      if(this.config.plugins) {
+        console.log(this.config.plugins)
+        this.config.plugins.forEach(p => {
+          const _p = plugins.find(pp => p.icon === pp.icon)
+          if(_p) {
+            _p.enabled = p.enabled
+          }
+        })
+      }
+      return plugins
+    },
+    enabledPlugins() {
+      return this.plugins.filter(v => v.enabled)
+    },
     user() {
       return this.$auth.user || {}
     }

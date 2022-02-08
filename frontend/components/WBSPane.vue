@@ -273,6 +273,8 @@ import GroupStore from '~/store/GroupStore'
 import ResourceStore from '~/store/ResourceStore'
 import TaskRecordStore from '~/store/TaskRecordStore'
 
+import ConfigStore from '~/store/ConfigStore'
+
 import io from 'socket.io-client'
 
 export default Vue.extend({
@@ -321,10 +323,6 @@ export default Vue.extend({
       taskDetail: {
         task: null,
         showDialog: false
-      },
-      config: {
-        closeProjects: [],
-        managementBeginDate: _managementBeginDate
       },
       managementBeginDateInput : {
         menu: false,
@@ -432,9 +430,7 @@ export default Vue.extend({
         this.managementBeginDateInput.value = this.config.managementBeginDate
 
         const [ yyyy, mm ] = this.managementBeginDateInput.value.split('-')
-        this.managementBeginDate.setFullYear(parseInt(yyyy))
-        this.managementBeginDate.setMonth(parseInt(mm) - 1)
-
+        this.managementBeginDate = new Date(parseInt(yyyy), parseInt(mm) - 1, 1, 0,0,0,0)
       }
     },
     async saveConfig() {
@@ -837,6 +833,22 @@ export default Vue.extend({
     },
     taskRecordStore() {
       return getModule(TaskRecordStore, this.$store)
+    },
+    configStore() {
+      return getModule(ConfigStore, this.$store)
+    },
+
+    config: {
+      get() {
+        const _managementBeginDate = dateformat(this.managementBeginDate, 'yyyy-mm')
+        return this.configStore?.config || {
+          closeProjects: [],
+          managementBeginDate: _managementBeginDate
+        }
+      },
+      set(v) {
+        this.configStore.setConfig(v)
+      }
     },
 
     holidays() {
