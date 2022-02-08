@@ -112,9 +112,6 @@ export default {
         const manHours = this.createTemplateManHors()
         const assignedTasks = tasks.filter(t => t.assigneeId === r.id)
 
-        console.group(r.name)
-        console.log(assignedTasks)
-
         // 各タスクの月別稼働を取得
         let tasksPerMonths = assignedTasks.flatMap(t => {
           return DateUtil.monthlyNetworkDaysFromYYYYMMDD(t.beginDate, t.plan, t.assignRate, this.holidays)
@@ -126,8 +123,6 @@ export default {
               }
             })
         })
-        console.log(tasksPerMonths)
-        console.groupEnd()
 
         // 表示領域に貼り付ける
         manHours.forEach(o => {
