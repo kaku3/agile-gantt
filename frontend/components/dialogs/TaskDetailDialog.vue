@@ -81,19 +81,14 @@ export default {
     content: ''
   }),
   methods: {
-    onClose() {
-      this.show = false
-    },
-    async onSave() {
-      await this.save()
+    async onClose() {
+      await this.save(this.task.id)
       this.show = false
     },
     async load (id) {
       console.log(`+ load(${id})`)
       const { data } = await this.$axios.get(`/tasks/${id}`)
-      this.$nextTick(() => {
-        this.content = data.content
-      })
+      this.content = data.content
     },
     async save(id) {
       console.log(`+ save(${id})`)
@@ -139,12 +134,10 @@ export default {
     },
     async task(v, ov) {
       if(v?.id !== ov?.id) {
-        console.log(this.content)
-        await this.save(ov.id)
-        this.$nextTick(() => {
-          console.log('+ load')
-          this.load(v.id)
-        })
+        if(ov) {
+          await this.save(ov.id)
+        }
+        this.load(v.id)
       }
     }
   }
