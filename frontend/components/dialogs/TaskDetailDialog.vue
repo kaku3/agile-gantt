@@ -5,7 +5,11 @@
     absolute
     right
     component-class="task-detail-dialog"
+    :elevation="5"
   >
+    <v-btn fab x-small dark class="close-button" @click="onClose">
+      <v-icon>mdi-close</v-icon>
+    </v-btn>
     <v-card-title v-html="taskName">
     </v-card-title>
     <v-card-text>
@@ -14,11 +18,6 @@
         Loading...
       </template>
     </v-card-text>
-    <v-card-actions>
-      <v-btn @click="onClose">
-        Close
-      </v-btn>
-    </v-card-actions>
   </v-navigation-drawer>
 </template>
 <script>
@@ -146,8 +145,17 @@ export default {
 <style lang="scss" scoped>
 
 [component-class=task-detail-dialog] {
-  margin: 0;
+  margin: 48px 0 0!important;
+  height: calc(100% - 48px)!important;
   z-index: 100;
+  overflow: visible;
+  border-top: 1px solid gray;
+
+  .close-button {
+    position: absolute;
+    top: 8px;
+    left: -20px;
+  }
 
   ::v-deep {
     .project-name {
@@ -157,12 +165,12 @@ export default {
     }
     .tiptap-vuetify-editor {
       .tiptap-vuetify-editor__content {
-        height: 75vh;
+        height: calc(80vh - 48px);
         overflow: auto;
 
         .ProseMirror {
           margin: .5rem!important;
-          min-height: calc(75vh - 2rem);
+          min-height: calc(80vh - 2rem);
           p {
             margin-top: 0!important;
             margin-bottom: 0!important;

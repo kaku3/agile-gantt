@@ -75,15 +75,19 @@
       </div>
       <div class="toolbar-button" @click="setHorizontallPane(100)">
         <v-icon small>mdi-chart-timeline</v-icon>
-        <div class="tool-name">gantt</div>
+        <div class="tool-name">GANTT</div>
       </div>
       <div class="toolbar-button" @click="setHorizontallPane(60)">
         <v-icon small>mdi-arrow-split-horizontal</v-icon>
-        <div class="tool-name">gantt<br />resource</div>
+        <div class="tool-name">GANTT<br />RESOURCE</div>
       </div>
       <div class="toolbar-button" @click="setHorizontallPane(0)">
         <v-icon small>mdi-account-box-multiple</v-icon>
-        <div class="tool-name">resource</div>
+        <div class="tool-name">RESOURCE</div>
+      </div>
+      <div class="toolbar-button" @click="onClickToggleTodo()">
+        <v-icon small>mdi-clipboard-check-outline</v-icon>
+        <div class="tool-name">TODO</div>
       </div>
     </v-toolbar>
     <splitpanes horizontal class="default-theme" style="height: calc(100vh - 80px)" @resize="onResizeMainContainer">
@@ -227,11 +231,12 @@
           v-model="resource.select"
           :headerMonth="headerMonth"
           :containerHeight="resource.containerHeight"
-          @click-resource="onclickResource"
+          @click-resource="onClickResource"
         />
       </pane>
     </splitpanes>
     <TaskDetailDialog v-model="taskDetail.showDialog" :task="taskDetail.task"></TaskDetailDialog>
+    <TodoDialog v-model="todo.showDialog"></TodoDialog>
     <AddProjectDialog v-model="addProject.showDialog" @addProject="onAddProject"></AddProjectDialog>
     <v-snackbar
       v-model="popup.show"
@@ -254,6 +259,7 @@ Vue.component('vue-draggable-resizable', VueDraggableResizable)
 import ResourceComponent from '~/components/ResourceComponent.vue'
 import AddProjectDialog from '~/components/dialogs/AddProjectDialog.vue'
 import TaskDetailDialog from '~/components/dialogs/TaskDetailDialog.vue'
+import TodoDialog from '~/components/dialogs/TodoDialog.vue'
 
 import DateUtil from '~/utils/DateUtil'
 
@@ -285,7 +291,8 @@ export default Vue.extend({
     VueNestableHandle,
     ResourceComponent,
     AddProjectDialog,
-    TaskDetailDialog
+    TaskDetailDialog,
+    TodoDialog
   },
   data () {
     const managementBeginDate = new Date()
@@ -322,6 +329,9 @@ export default Vue.extend({
       },
       taskDetail: {
         task: null,
+        showDialog: false
+      },
+      todo: {
         showDialog: false
       },
       managementBeginDateInput : {
@@ -782,7 +792,7 @@ export default Vue.extend({
     //
     // resource
     //
-    onclickResource(resourceId) {
+    onClickResource(resourceId) {
       this.tasks.forEach(task => {
         task.showChildren = task.children.some(t => t.assignee?.id == resourceId)
       })
@@ -790,6 +800,12 @@ export default Vue.extend({
       this.locateAllTaskTimelines()
     },
 
+    //
+    //
+    //
+    onClickToggleTodo() {
+      this.todo.showDialog = !this.todo.showDialog
+    },
 
     //
     // window resize.

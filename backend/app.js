@@ -36,6 +36,7 @@ app.use(session(_sessionSetting))
 
 
 const common = require('./common.js')
+const TodoUtil = require('./utils/TodoUtil')
 
 app.get('/', common.preProcess, (req, res) => {
     if(!req.session.viewCount) {
@@ -55,6 +56,7 @@ app.use('/api/groups', common.preProcess, require('./router/groups'))
 app.use('/api/holidays', common.preProcess, require('./router/holidays'))
 
 TaskUtil.init()
+TodoUtil.init()
 
 let clients = []
 io.on('connection', (socket) => {
@@ -77,6 +79,11 @@ io.on('connection', (socket) => {
     socket.on('updateTasks', (o) => {
         TaskUtil.set(o.tasks)
         io.emit('onUpdateTasks', o)
+    })
+
+    socket.on('updateTodos', (o) => {
+        TodoUtil.save(o.todos)
+        io.emit('onUpdateTodos', o)
     })
 
     socket.on('disconnect', () => {

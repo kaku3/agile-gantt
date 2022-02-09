@@ -6,8 +6,6 @@ const db = path.join(process.cwd(), 'db')
 class TaskUtil {
     static _tasks = null
 
-    static _test = 0
-
     static init() {
         TaskUtil.load()
     }
