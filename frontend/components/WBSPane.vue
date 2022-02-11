@@ -522,7 +522,7 @@ export default Vue.extend({
             }
             if(estimate) {
               t.estimate = estimate
-              t.plan = estimate
+              t.plan = estimate * 20
             }
             if(beginDate) {
               const [ yyyy, mm, dd] = beginDate.split('-')

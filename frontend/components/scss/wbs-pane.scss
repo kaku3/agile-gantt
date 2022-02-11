@@ -1,47 +1,4 @@
-$color-holiday: #F8BBD0;
-
-$color-header: #eee;
-
-$time-grid-x: 5px;
-$line-height: 24px;
-$task-height: 20px;
-$plan-height: 16px;
-$project-height: 12px;
-
-$task-margin-top: 4px;
-$task-indent-size: 16px;
-
-$time-line-width: 580 * $time-grid-x;
-
-// d : 1 - 7
-@mixin background-date-grid($d) {
-  $base-grid-colors: (#ddd #ddd #ddd #ddd #ddd #ddd #ddd);
-  $grid-colors: set-nth($base-grid-colors, $d, #888);
-
-  $sun: ($d + 6) % 7 + 1;
-  $sat: ($d + 5) % 7 + 1;
-
-  background-image:
-    linear-gradient(
-      90deg,
-      transparent #{$time-grid-x - 1}, nth($grid-colors, 1), $time-grid-x, transparent #{$time-grid-x + 1},
-      transparent #{$time-grid-x * 2 - 1}, nth($grid-colors, 2), $time-grid-x * 2, transparent #{$time-grid-x * 2 + 1},
-      transparent #{$time-grid-x * 3 - 1}, nth($grid-colors, 3), $time-grid-x * 3, transparent #{$time-grid-x * 3 + 1},
-      transparent #{$time-grid-x * 4 - 1}, nth($grid-colors, 4), $time-grid-x * 4, transparent #{$time-grid-x * 4 + 1},
-      transparent #{$time-grid-x * 5 - 1}, nth($grid-colors, 5), $time-grid-x * 5, transparent #{$time-grid-x * 5 + 1},
-      transparent #{$time-grid-x * 6 - 1}, nth($grid-colors, 6), $time-grid-x * 6, transparent #{$time-grid-x * 6 + 1},
-      transparent #{$time-grid-x * 7 - 1}, nth($grid-colors, 7)
-    ),
-    linear-gradient(
-      90deg,
-      transparent #{$time-grid-x * $sat - $time-grid-x}, $color-holiday #{$time-grid-x * $sat - ($time-grid-x - 1)}, $color-holiday, $time-grid-x * $sat, transparent #{$time-grid-x * $sat + 1}
-    ),
-    linear-gradient(
-      90deg,
-      transparent #{$time-grid-x * $sun - $time-grid-x}, $color-holiday #{$time-grid-x * $sun - ($time-grid-x - 1)}, $color-holiday, $time-grid-x * $sun, transparent #{$time-grid-x * $sun + 1},
-    );
-}
-
+@import './wbs-common';
 
 .wbs-pane {
   width: 100%;
@@ -276,7 +233,7 @@ $time-line-width: 580 * $time-grid-x;
             height: $plan-height;
             font-size: .7rem;
             color: white;
-            background: #2196F3;
+            background: #42A5F5;
             border-radius: 4px;
 
             &.project {
@@ -302,7 +259,7 @@ $time-line-width: 580 * $time-grid-x;
 
             @for $c from 0 through 10 {
               &.assign-rate-#{$c} {
-                background-color: rgba(#2196F3, ($c / 10 + 0.3));
+                background-color: rgba(#42A5F5, ($c / 10 + 0.3));
               }
             }
           }
