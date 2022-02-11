@@ -109,7 +109,7 @@ export default Vue.extend({
     VueNestableHandle,
   },
   data () {
-    const gridX = 5
+    const gridX = 8
     const timelineMaxTerm = 580
 
     return {
@@ -326,6 +326,11 @@ export default Vue.extend({
 </script>
 <style lang="scss" scoped>
 @import './scss/wbs-common';
+
+$time-grid-x: 8px;
+
+$time-line-width: 580 * $time-grid-x;
+
 .tasks-pane {
   width: max-content;
   .tasks-header {
