@@ -35,16 +35,24 @@
                   {{task}}
                 </li>
               </ul>
-              <v-textarea v-else-if="isTypeText"
-                v-model="text"
-                label="プロジェクト&タスク"
-                rows="1"
-                auto-grow
-                dense
-              >
-              </v-textarea>
-              <div v-else-if="isTypeCsv">
-
+              <div v-else-if="isTypeText">
+                <v-textarea
+                  v-model="text"
+                  label="プロジェクト&タスク"
+                  rows="1"
+                  auto-grow
+                  dense
+                >
+                </v-textarea>
+                <v-file-input
+                  dense
+                  show-size
+                  accept="text/csv"
+                  label="csvファイル"
+                  v-model="csvFile"
+                  @change="onChangeCsvFile"
+                >
+                </v-file-input>
               </div>
             </v-col>
           </v-row>
@@ -82,6 +90,7 @@ export default {
 タスク2
 タスク3,担当者,10,2022-02-02`
     return {
+      csvFile: null,
       text,
       projects: {
         simple: {
@@ -103,10 +112,6 @@ export default {
         text: {
           label: 'テキスト',
           description: 'カンマ、改行区切りテキストよりプロジェクトを作成します。<br />{プロジェクト}<br />{タスク},{見積(省略可)},{担当者(省略可)},{開始日(省略可)}'
-        },
-        csv: {
-          label: 'csv インポート',
-          description: 'csv ファイルよりプロジェクトを作成します。<br />{プロジェクト}<br />{タスク},{見積(省略可)},{担当者(省略可)},{開始日(省略可)}'
         }
       },
       tasks: {
@@ -159,7 +164,20 @@ export default {
     },
     onCancel() {
       this.show = false
-    }
+    },
+    async onChangeCsvFile(file){
+      this.text = await this.readAsText(file)
+    },
+    readAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          resolve(reader.result);
+        };
+        reader.onerror = reject;
+        reader.readAsText(file)
+      })
+    },
   },
   computed: {
     show: {
@@ -171,14 +189,11 @@ export default {
       }
     },
     isTypePreset() {
-      return ![ 'text', 'csv' ].includes(this.selectedType)
+      return ![ 'text' ].includes(this.selectedType)
     },
     isTypeText() {
       return this.selectedType === 'text'
-    },
-    isTypeCsv() {
-      return this.selectedType === 'csv'
-    },
+    }
   }
 }
 </script>
