@@ -150,11 +150,12 @@ export default {
   z-index: 100;
   overflow: visible;
   border-top: 1px solid gray;
+  box-shadow: -8px 0 8px -4px rgb(black, .25);
 
   .close-button {
     position: absolute;
     top: 8px;
-    left: -20px;
+    left: -24px;
   }
 
   ::v-deep {

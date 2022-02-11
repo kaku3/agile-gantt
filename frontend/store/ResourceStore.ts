@@ -9,7 +9,7 @@ import { ResourceEntity } from '~/models/Resource'
 export default class ResourceStore extends VuexModule {
   _resources: ResourceEntity[] = []
 
-  public get resources(): ResourceEntity[] {
+  get resources(): ResourceEntity[] {
     return this._resources
   }
 

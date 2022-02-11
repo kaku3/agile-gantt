@@ -9,7 +9,7 @@ import { ConfigEntity, newConfigEntity, PluginEntity } from '~/models/Config'
 export default class ConfigStore extends VuexModule {
   _config: ConfigEntity = newConfigEntity();
 
-  public get config(): ConfigEntity {
+  get config(): ConfigEntity {
     return this._config;
   }
 

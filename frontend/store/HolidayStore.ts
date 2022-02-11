@@ -8,11 +8,11 @@ import { Module, VuexModule, Mutation, Action } from 'vuex-module-decorators'
 export default class HolidayStore extends VuexModule {
   _holidays: any[] = []
 
-  public get holidays(): any[] {
+  get holidays(): any[] {
     return this._holidays
   }
 
-  public get holidayDates(): String[] {
+  get holidayDates(): String[] {
     return this._holidays.map(h => h.date)
   }
 

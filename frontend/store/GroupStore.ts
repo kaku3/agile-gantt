@@ -9,7 +9,7 @@ import { GroupEntity } from '~/models/Group'
 export default class GroupStore extends VuexModule {
   _groups: GroupEntity[] = []
 
-  public get groups(): GroupEntity[] {
+  get groups(): GroupEntity[] {
     return this._groups
   }
 

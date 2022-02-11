@@ -5,6 +5,7 @@ const cors = require('cors')
 const session = require('express-session')
 
 const TaskUtil = require('./utils/TaskUtil')
+const TodoUtil = require('./utils/TodoUtil')
 
 
 const config = require('./config.js')
@@ -36,7 +37,6 @@ app.use(session(_sessionSetting))
 
 
 const common = require('./common.js')
-const TodoUtil = require('./utils/TodoUtil')
 
 app.get('/', common.preProcess, (req, res) => {
     if(!req.session.viewCount) {
@@ -54,6 +54,7 @@ app.use('/api/tasks', common.preProcess, require('./router/tasks'))
 app.use('/api/resources', common.preProcess, require('./router/resources'))
 app.use('/api/groups', common.preProcess, require('./router/groups'))
 app.use('/api/holidays', common.preProcess, require('./router/holidays'))
+app.use('/api/todos', common.preProcess, require('./router/todos'))
 
 TaskUtil.init()
 TodoUtil.init()

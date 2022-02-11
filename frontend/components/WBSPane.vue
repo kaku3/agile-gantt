@@ -236,7 +236,7 @@
       </pane>
     </splitpanes>
     <TaskDetailDialog v-model="taskDetail.showDialog" :task="taskDetail.task"></TaskDetailDialog>
-    <TodoDialog v-model="todo.showDialog"></TodoDialog>
+    <TodoDialog v-model="todo.showDialog" @update="onUpdateTodos"></TodoDialog>
     <AddProjectDialog v-model="addProject.showDialog" @addProject="onAddProject"></AddProjectDialog>
     <v-snackbar
       v-model="popup.show"
@@ -278,6 +278,7 @@ import HolidayStore from '~/store/HolidayStore'
 import GroupStore from '~/store/GroupStore'
 import ResourceStore from '~/store/ResourceStore'
 import TaskRecordStore from '~/store/TaskRecordStore'
+import TodoStore from '~/store/TodoStore'
 
 import ConfigStore from '~/store/ConfigStore'
 
@@ -376,6 +377,11 @@ export default Vue.extend({
           this.loadFromTaskRecords(o.tasks, false)
         }
       })
+      this.socket.on('onUpdateTodos', (o) => {
+        if(o.token !== this.socketToken) {
+          this.todoStore.setTodos(o.todos)
+        }
+      })
     },
     disposeSocket() {
       this.socket.disconnect()
@@ -402,6 +408,8 @@ export default Vue.extend({
 
           this.loadFromTaskRecords(values[3].data)
         })
+
+      this.todoStore.loadTodos(this.$axios)
     },
     loadFromTaskRecords(taskRecords, emit) {
       this.serialTaskId = taskRecords.length > 0 ? taskRecords.map(t => t.id).reduce((a, v) => Math.max(a, v)) + 1 : 1
@@ -806,6 +814,13 @@ export default Vue.extend({
     onClickToggleTodo() {
       this.todo.showDialog = !this.todo.showDialog
     },
+    onUpdateTodos(todos) {
+      console.log(todos)
+      this.socket.emit('updateTodos', {
+        token: this.socketToken,
+        todos
+      })
+    },
 
     //
     // window resize.
@@ -849,6 +864,9 @@ export default Vue.extend({
     },
     taskRecordStore() {
       return getModule(TaskRecordStore, this.$store)
+    },
+    todoStore() {
+      return getModule(TodoStore, this.$store)
     },
     configStore() {
       return getModule(ConfigStore, this.$store)
