@@ -2,7 +2,7 @@
   <v-dialog
     v-model="show"
     persistent
-    width="640px"
+    width="800px"
   >
     <v-card>
       <v-card-title>
@@ -11,13 +11,12 @@
       <v-card-text>
         <v-container>
           <v-row>
-            <v-col>
-              {{ projects[selectedProject].description }}
+            <v-col v-html="projects[selectedType].description">
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="4">
-              <v-radio-group v-model="selectedProject">
+              <v-radio-group v-model="selectedType">
                 <v-radio
                   v-for="(item, key) in projects"
                   :key="key"
@@ -28,14 +27,25 @@
               </v-radio-group>
             </v-col>
             <v-col cols="8">
-              <ul>
+              <ul v-if="isTypePreset">
                 <li
-                  v-for="(task, i) in tasks[selectedProject]"
+                  v-for="(task, i) in tasks[selectedType]"
                   :key="i"
                 >
                   {{task}}
                 </li>
               </ul>
+              <v-textarea v-else-if="isTypeText"
+                v-model="text"
+                label="プロジェクト&タスク"
+                rows="1"
+                auto-grow
+                dense
+              >
+              </v-textarea>
+              <div v-else-if="isTypeCsv">
+
+              </div>
             </v-col>
           </v-row>
         </v-container>
@@ -66,7 +76,13 @@ export default {
     value: Boolean
   },
   data () {
+    const text =
+`プロジェクト1
+タスク1,担当者,7,2022-01-02
+タスク2
+タスク3,担当者,10,2022-02-02`
     return {
+      text,
       projects: {
         simple: {
           label: 'シンプル',
@@ -84,6 +100,14 @@ export default {
           label: '保守',
           description: '保守用プロジェクトです。'
         },
+        text: {
+          label: 'テキスト',
+          description: 'カンマ、改行区切りテキストよりプロジェクトを作成します。<br />{プロジェクト}<br />{タスク},{見積(省略可)},{担当者(省略可)},{開始日(省略可)}'
+        },
+        csv: {
+          label: 'csv インポート',
+          description: 'csv ファイルよりプロジェクトを作成します。<br />{プロジェクト}<br />{タスク},{見積(省略可)},{担当者(省略可)},{開始日(省略可)}'
+        }
       },
       tasks: {
         simple: [
@@ -116,13 +140,22 @@ export default {
           '保守',
         ]
       },
-      selectedProject: 'simple'
+      selectedType: 'simple'
     }
   },
   methods: {
     onAdd() {
-      this.$emit('addProject', this.tasks[this.selectedProject])
-      this.show = false
+      if(this.isTypePreset) {
+        this.$emit('addProject', this.tasks[this.selectedType], true)
+        this.show = false
+      } else if(this.isTypeText) {
+        const records = this.text.split('\n')
+        if(records.length < 2) {
+          return
+        }
+        this.$emit('addProject', records, false)
+        this.show = false
+      }
     },
     onCancel() {
       this.show = false
@@ -136,7 +169,16 @@ export default {
       set (value) {
         this.$emit('input', value)
       }
-    }
+    },
+    isTypePreset() {
+      return ![ 'text', 'csv' ].includes(this.selectedType)
+    },
+    isTypeText() {
+      return this.selectedType === 'text'
+    },
+    isTypeCsv() {
+      return this.selectedType === 'csv'
+    },
   }
 }
 </script>

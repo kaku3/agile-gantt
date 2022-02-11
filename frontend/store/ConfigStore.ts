@@ -10,7 +10,7 @@ export default class ConfigStore extends VuexModule {
   _config: ConfigEntity = newConfigEntity();
 
   get config(): ConfigEntity {
-    return this._config;
+    return JSON.parse(JSON.stringify(this._config));
   }
 
   @Mutation

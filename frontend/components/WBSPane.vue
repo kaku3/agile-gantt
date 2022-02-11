@@ -492,19 +492,50 @@ export default Vue.extend({
       this.addProject.showDialog = true
     },
 
-    onAddProject(taskNames) {
-      this.addProject.showDialog = true
+    onAddProject(records, preset) {
+      if(preset) {
+        const assignee = this.resourceSelectedAssignee
 
-      const assignee = this.resourceSelectedAssignee
+        const project = this.newTaskItem()
+        project.assignee = assignee
+        for(const name of records) {
+          const t = this.newTaskItem(name)
+          t.assignee = assignee
+          project.children.push(t)
+        }
+        this.tasks = this.tasks.concat(project)
+      } else {
+        try {
+          const p = records.shift()
+          const [ projectName ] = p.split(',') // name 以外は無視する
 
-      const project = this.newTaskItem()
-      project.assignee = assignee
-      for(const name of taskNames) {
-        const t = this.newTaskItem(name)
-        t.assignee = assignee
-        project.children.push(t)
+          const project = this.newTaskItem()
+          project.name = projectName
+          for(const record of records) {
+            const [ taskName, assigneeName, estimate, beginDate ] = record.split(',')
+            const t = this.newTaskItem(taskName)
+            if(assigneeName) {
+              const assignee =this.resources.find(r => r.name == assigneeName)
+              if(assignee) {
+                t.assignee = assignee
+              }
+            }
+            if(estimate) {
+              t.estimate = estimate
+              t.plan = estimate
+            }
+            if(beginDate) {
+              const [ yyyy, mm, dd] = beginDate.split('-')
+              t.beginDate = parseInt(yyyy) * 10000 + parseInt(mm) * 100 + parseInt(dd)
+            }
+            project.children.push(t)
+          }
+          this.tasks = this.tasks.concat(project)
+        } catch(e) {
+          console.error(e)
+        }
       }
-      this.tasks = this.tasks.concat(project)
+      this.locateAllTaskTimelines()
       this.updateAllTasks()
     },
     addTaskItem() {
@@ -883,6 +914,10 @@ export default Vue.extend({
       set(v) {
         this.configStore.setConfig(v)
       }
+    },
+
+    resources() {
+      return this.resourceStore?.resources || []
     },
 
     holidays() {
