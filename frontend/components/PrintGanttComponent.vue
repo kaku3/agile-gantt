@@ -50,15 +50,15 @@
       </div>
     </div>
     <div class="timelines-pane">
-      <div class="timelines-header">
-        <div v-for="i of 18" :key="i" :style="{ width: grid.dates[i-1] * gridX + 'px'}">
+      <div class="timelines-header" :class="`z${zoom}`">
+        <div v-for="i of 18" :key="i" :style="{ 'min-width': grid.dates[i-1] * gridXX + 'px'}">
           {{ headerMonth(i) | mm }}
         </div>
       </div>
-      <div class="timelines-container">
+      <div class="timelines-container" :class="`z${zoom}`">
         <div class="today" :style="timelineToday"></div>
         <div v-for="task in timelineTasks" :key="task.id">
-          <div class="timeline-container" :class="gridStartManagementDay">
+          <div class="timeline-container" :class="timelineContainerGridClass">
             <vue-draggable-resizable
               class-name="timeline-item"
               :x="task.timeline.x"
@@ -66,7 +66,7 @@
               :w="task.timeline.w"
               :h="lineHeight"
               :parent="true"
-              :grid="[gridX,1]"
+              :grid="[gridXX, 1]"
               :handles="['ml','mr']"
               :resizable="false"
               :draggable="false"
@@ -109,7 +109,8 @@ export default Vue.extend({
     VueNestableHandle,
   },
   data () {
-    const gridX = 8
+    const zoom = 2
+    const gridX = 5
     const timelineMaxTerm = 580
 
     return {
@@ -120,7 +121,7 @@ export default Vue.extend({
       resources: [],
       gridX,
       lineHeight: 24,
-      timelineMaxWidth: timelineMaxTerm * gridX,
+      timelineMaxTerm
     }
   },
   async mounted() {
@@ -128,6 +129,8 @@ export default Vue.extend({
     this.config = res.data
     const [ yyyy, mm ] = this.config.managementBeginDate.split('-')
     this.config.managementBeginDate = new Date(parseInt(yyyy), parseInt(mm) - 1, 1, 0,0,0,0)
+
+    console.log(this.config.zoom)
 
     this.load()
   },
@@ -153,7 +156,6 @@ export default Vue.extend({
       this.tasks = fromTaskRecords(taskRecords, this.resources)
 
       this.updateAllTasks()
-
       this.locateAllTaskTimelines()
     },
 
@@ -197,14 +199,14 @@ export default Vue.extend({
     calcManHour(t) {
       t.planManHour = DateUtil.networkDaysFromYYYYMMDD(t.beginDate, t.plan, this.holidays) * t.assignRate
     },
-    locateTaskTimeline(t, managementBeginDate, gridX) {
-      t.timeline.x = DateUtil.dateCountFromBaseDate(managementBeginDate, t.beginDate) * gridX
-      t.timeline.w = t.plan * gridX
+    locateTaskTimeline(t, managementBeginDate) {
+      t.timeline.x = DateUtil.dateCountFromBaseDate(managementBeginDate, t.beginDate) * this.gridXX
+      t.timeline.w = t.plan * this.gridXX
     },
     locateAllTaskTimelines() {
       // timeline 表示位置を復元
       this.timelineTasks.forEach(t => {
-        this.locateTaskTimeline(t, this.managementBeginDate, this.gridX)
+        this.locateTaskTimeline(t, this.managementBeginDate)
       })
     },
 
@@ -260,17 +262,27 @@ export default Vue.extend({
         startManagementDay
       }
     },
+    gridXX() {
+      return this.gridX * this.zoom
+    },
+    zoom() {
+      return this.config?.zoom || 1
+    },
+    timelineMaxWidth() {
+      return this.gridXX * this.timelineMaxTerm
+    },
+
     timelineToday() {
       const x = DateUtil.dateCountFromBaseDate(
         this.managementBeginDate,
-        DateUtil.yyyymmddFromDate(new Date())) * this.gridX + (this.gridX / 2)
+        DateUtil.yyyymmddFromDate(new Date())) * this.gridXX + (this.gridXX / 2)
       return {
         transform: `translateX(${x}px)`
       }
     },
 
-    gridStartManagementDay() {
-      return `d${(14 - this.grid.startManagementDay) % 7}`
+    timelineContainerGridClass() {
+      return `d${(14 - this.grid.startManagementDay) % 7} z${this.zoom}`
     },
 
     timelineTasks() {
@@ -326,10 +338,6 @@ export default Vue.extend({
 </script>
 <style lang="scss" scoped>
 @import './scss/wbs-common';
-
-$time-grid-x: 8px;
-
-$time-line-width: 580 * $time-grid-x;
 
 .tasks-pane {
   width: max-content;
@@ -454,12 +462,17 @@ $time-line-width: 580 * $time-grid-x;
   overflow: auto;
   .timelines-header {
     display: flex;
-    width: $time-line-width;
     background: $color-header;
     z-index: 5;
+
+    @for $zoom from 1 through 5 {
+      &.z#{$zoom} {
+        width: #{ $time-line-max-term * $time-grid-x * $zoom };
+      }
+    }
+
     div {
       padding: .25rem;
-      width: #{$time-grid-x * 30};
       font-size: .7rem;
       border-right: 1px solid #888;
       border-bottom: 1px solid #888;
@@ -468,7 +481,12 @@ $time-line-width: 580 * $time-grid-x;
 
   .timelines-container {
     position: relative;
-    width: $time-line-width;
+
+    @for $zoom from 1 through 5 {
+      &.z#{$zoom} {
+        width: #{ $time-line-max-term * $time-grid-x * $zoom };
+      }
+    }
 
     .today {
       position: absolute;
@@ -482,19 +500,22 @@ $time-line-width: 580 * $time-grid-x;
     .timeline-container {
       position: relative;
       display: block;
-      width: $time-line-width;
       height: $line-height;
       border-bottom: 1px solid white;
 
       background-repeat: repeat-x;
-      background-size: #{$time-grid-x * 7} $line-height;
 
-      @for $d from 1 through 7 {
-        &.d#{$d - 1} {
-          @include background-date-grid($d);
+      @for $zoom from 1 through 5 {
+        &.z#{$zoom} {
+          background-size: #{$time-grid-x * $zoom * 7} $line-height;
+        }
+
+        @for $d from 1 through 7 {
+          &.d#{$d - 1}.z#{$zoom} {
+            @include background-date-grid($d, $zoom);
+          }
         }
       }
-
 
       ::v-deep .timeline-item {
         padding-top: 2px;

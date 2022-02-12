@@ -11,10 +11,11 @@ $project-height: 12px;
 $task-margin-top: 4px;
 $task-indent-size: 16px;
 
-$time-line-width: 580 * $time-grid-x;
+$time-line-max-term: 580;
 
 // d : 1 - 7
-@mixin background-date-grid($d) {
+@mixin background-date-grid($d, $zoom) {
+  $xx: $time-grid-x * $zoom;
   $base-grid-colors: (#ddd #ddd #ddd #ddd #ddd #ddd #ddd);
   $grid-colors: set-nth($base-grid-colors, $d, #888);
 
@@ -24,20 +25,20 @@ $time-line-width: 580 * $time-grid-x;
   background-image:
     linear-gradient(
       90deg,
-      transparent #{$time-grid-x - 1}, nth($grid-colors, 1), $time-grid-x, transparent #{$time-grid-x + 1},
-      transparent #{$time-grid-x * 2 - 1}, nth($grid-colors, 2), $time-grid-x * 2, transparent #{$time-grid-x * 2 + 1},
-      transparent #{$time-grid-x * 3 - 1}, nth($grid-colors, 3), $time-grid-x * 3, transparent #{$time-grid-x * 3 + 1},
-      transparent #{$time-grid-x * 4 - 1}, nth($grid-colors, 4), $time-grid-x * 4, transparent #{$time-grid-x * 4 + 1},
-      transparent #{$time-grid-x * 5 - 1}, nth($grid-colors, 5), $time-grid-x * 5, transparent #{$time-grid-x * 5 + 1},
-      transparent #{$time-grid-x * 6 - 1}, nth($grid-colors, 6), $time-grid-x * 6, transparent #{$time-grid-x * 6 + 1},
-      transparent #{$time-grid-x * 7 - 1}, nth($grid-colors, 7)
+      transparent #{$xx - 1}, nth($grid-colors, 1), $xx, transparent #{$xx + 1},
+      transparent #{$xx * 2 - 1}, nth($grid-colors, 2), $xx * 2, transparent #{$xx * 2 + 1},
+      transparent #{$xx * 3 - 1}, nth($grid-colors, 3), $xx * 3, transparent #{$xx * 3 + 1},
+      transparent #{$xx * 4 - 1}, nth($grid-colors, 4), $xx * 4, transparent #{$xx * 4 + 1},
+      transparent #{$xx * 5 - 1}, nth($grid-colors, 5), $xx * 5, transparent #{$xx * 5 + 1},
+      transparent #{$xx * 6 - 1}, nth($grid-colors, 6), $xx * 6, transparent #{$xx * 6 + 1},
+      transparent #{$xx * 7 - 1}, nth($grid-colors, 7)
     ),
     linear-gradient(
       90deg,
-      transparent #{$time-grid-x * $sat - $time-grid-x}, $color-holiday #{$time-grid-x * $sat - ($time-grid-x - 1)}, $color-holiday, $time-grid-x * $sat, transparent #{$time-grid-x * $sat + 1}
+      transparent #{$xx * $sat - $xx}, $color-holiday #{$xx * $sat - ($xx - 1)}, $color-holiday, $xx * $sat, transparent #{$xx * $sat + 1}
     ),
     linear-gradient(
       90deg,
-      transparent #{$time-grid-x * $sun - $time-grid-x}, $color-holiday #{$time-grid-x * $sun - ($time-grid-x - 1)}, $color-holiday, $time-grid-x * $sun, transparent #{$time-grid-x * $sun + 1},
+      transparent #{$xx * $sun - $xx}, $color-holiday #{$xx * $sun - ($xx - 1)}, $color-holiday, $xx * $sun, transparent #{$xx * $sun + 1},
     );
 }

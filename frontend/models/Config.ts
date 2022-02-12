@@ -6,6 +6,7 @@ export interface PluginEntity {
 }
 
 export interface ConfigEntity {
+  zoom: number
   closeProject: number[]
   managementBeginDate: string
 
@@ -49,6 +50,7 @@ export const PLUGINS = [
 
 export function newConfigEntity() {
   return {
+    zoom: 1,
     closeProject: [],
     managementBeginDate: '',
 

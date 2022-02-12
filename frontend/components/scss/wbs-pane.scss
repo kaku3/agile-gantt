@@ -178,9 +178,15 @@
       position: sticky;
       top: 0;
       display: flex;
-      width: $time-line-width;
       background: $color-header;
       z-index: 5;
+
+      @for $zoom from 1 through 5 {
+        &.z#{$zoom} {
+          width: #{ $time-line-max-term * $time-grid-x * $zoom };
+        }
+      }
+
       div {
         padding: .25rem;
         width: #{$time-grid-x * 30};
@@ -192,7 +198,12 @@
 
     .timelines-container {
       position: relative;
-      width: $time-line-width;
+
+      @for $zoom from 1 through 5 {
+        &.z#{$zoom} {
+          width: #{ $time-line-max-term * $time-grid-x * $zoom };
+        }
+      }
 
       .today {
         position: absolute;
@@ -206,16 +217,20 @@
       .timeline-container {
         position: relative;
         display: block;
-        width: $time-line-width;
         height: $line-height;
         border-bottom: 1px solid white;
 
         background-repeat: repeat-x;
-        background-size: #{$time-grid-x * 7} $line-height;
 
-        @for $d from 1 through 7 {
-          &.d#{$d - 1} {
-            @include background-date-grid($d);
+        @for $zoom from 1 through 5 {
+          &.z#{$zoom} {
+            background-size: #{$time-grid-x * $zoom * 7} $line-height;
+          }
+
+          @for $d from 1 through 7 {
+            &.d#{$d - 1}.z#{$zoom} {
+              @include background-date-grid($d, $zoom);
+            }
           }
         }
 
@@ -320,13 +335,24 @@
       margin-left: .25rem;
     }
   }
-  .toolbar.management-begin-date {
-    margin-right: 1rem;
-    padding-top: 14px;
-    width: 5rem;
+  .toolbar {
+    &.timeline-zoom {
+      margin-right: 1rem;
+      padding-top: .75rem;
+      width: 5rem;
 
-    ::v-deep input[role=button] {
-      font-size: .8rem;
+      * {
+        font-size: .8rem;
+      }
+    }
+    &.management-begin-date {
+      margin-right: 1rem;
+      padding-top: 14px;
+      width: 5rem;
+
+      ::v-deep input[role=button] {
+        font-size: .8rem;
+      }
     }
   }
   .toolbar-button {

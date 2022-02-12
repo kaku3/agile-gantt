@@ -28,7 +28,16 @@
           {{ c.name }}
         </div>
       </div>
-      <div class="toolbar management-begin-date ml-auto">
+      <div class="toolbar timeline-zoom ml-auto">
+        <v-select
+          :items="[ 5, 4, 3, 2, 1 ]"
+          :value="zoom"
+          prepend-icon="mdi-loupe"
+          @change="onChangeZoom"
+        >
+        </v-select>
+      </div>
+      <div class="toolbar management-begin-date">
         <v-menu
           ref="managementBeginDateInput"
           v-model="managementBeginDateInput.menu"
@@ -191,15 +200,15 @@
             </div>
           </pane>
           <pane size="65" class="timelines-pane">
-            <div class="timelines-header">
-              <div v-for="i of 18" :key="i" :style="{ width: grid.dates[i-1] * gridX + 'px'}">
+            <div class="timelines-header" :class="`z${zoom}`">
+              <div v-for="i of 18" :key="i" :style="{ 'min-width': grid.dates[i-1] * gridXX + 'px'}">
                 {{ headerMonth(i) | mm }}
               </div>
             </div>
-            <div class="timelines-container">
+            <div class="timelines-container" :class="`z${zoom}`">
               <div class="today" :style="timelineToday"></div>
               <div v-for="task in timelineTasks" :key="task.id">
-                <div class="timeline-container" :class="gridStartManagementDay">
+                <div class="timeline-container" :class="timelineContainerGridClass">
                   <vue-draggable-resizable
                     class-name="timeline-item"
                     :x="task.timeline.x"
@@ -207,7 +216,7 @@
                     :w="task.timeline.w"
                     :h="lineHeight"
                     :parent="true"
-                    :grid="[gridX,1]"
+                    :grid="[gridXX,1]"
                     :handles="['ml','mr']"
                     :resizable="task.children.length === 0"
                     @resizestop="(x, y, width, height) => onResizeTimelineItem(x, y, width, height, task)"
@@ -312,8 +321,8 @@ export default Vue.extend({
       clients: [],
       serialTaskId : 1,
       managementBeginDate,
+      timelineMaxTerm,
       gridX,
-      timelineMaxWidth: timelineMaxTerm * gridX,
       lineHeight: 24,
       tasks: [],
       resource: {
@@ -475,6 +484,12 @@ export default Vue.extend({
       }
     },
 
+    onChangeZoom(zoom) {
+      this.config.zoom = zoom
+      this.configStore.setZoom(zoom)
+      this.locateAllTaskTimelines()
+      this.saveConfig()
+    },
 
     /**
      * beginDate + (1~12)
@@ -548,11 +563,10 @@ export default Vue.extend({
     },
     newTaskItem(name = '') {
       const managementBeginDate = this.managementBeginDate
-      const gridX = this.gridX
 
       const t = newTaskEntity(this.serialTaskId)
       t.name = name || `task - ${this.serialTaskId}`
-      this.locateTaskTimeline(t, managementBeginDate, gridX)
+      this.locateTaskTimeline(t, managementBeginDate)
       this.serialTaskId++
       return t
     },
@@ -609,7 +623,7 @@ export default Vue.extend({
           t.beginDate = DateUtil.yyyymmddFromDate(b)
           t.plan = DateUtil.dateDiff(b, e)
 
-          this.locateTaskTimeline(t, this.managementBeginDate, this.gridX)
+          this.locateTaskTimeline(t, this.managementBeginDate)
 
           t.children.forEach(tt => {
             tt.parent = t
@@ -740,14 +754,14 @@ export default Vue.extend({
     // timelines
     //
 
-    locateTaskTimeline(t, managementBeginDate, gridX) {
-      t.timeline.x = DateUtil.dateCountFromBaseDate(managementBeginDate, t.beginDate) * gridX
-      t.timeline.w = t.plan * gridX
+    locateTaskTimeline(t, managementBeginDate) {
+      t.timeline.x = DateUtil.dateCountFromBaseDate(managementBeginDate, t.beginDate) * this.gridXX
+      t.timeline.w = t.plan * this.gridXX
     },
     locateAllTaskTimelines() {
       // timeline 表示位置を復元
       this.timelineTasks.forEach(t => {
-        this.locateTaskTimeline(t, this.managementBeginDate, this.gridX)
+        this.locateTaskTimeline(t, this.managementBeginDate)
       })
     },
 
@@ -780,10 +794,9 @@ export default Vue.extend({
 
     onDragTimelineItem(x, y, task) {
       const managementBeginDate = this.managementBeginDate
-      const gridX = this.gridX
 
       const _beginDate = task.beginDate
-      const d = Math.floor(x / gridX)
+      const d = Math.floor(x / this.gridXX)
       task.beginDate = DateUtil.yyyymmddFromDate(DateUtil.dateFromDateCount(this.managementBeginDate, d))
 
       // 子がある場合は、子に変更を伝搬させる
@@ -798,16 +811,16 @@ export default Vue.extend({
             DateUtil.dateFromYYYYMMDD(tt.beginDate),
             dd
           )
-          this.locateTaskTimeline(tt, managementBeginDate, gridX)
+          this.locateTaskTimeline(tt, managementBeginDate)
         })
       }
       this.updateAllTasks()
     },
 
     onResizeTimelineItem(x, y, width, height, task) {
-      const d = Math.floor(x / this.gridX)
+      const d = Math.floor(x / this.gridXX)
       task.beginDate = DateUtil.yyyymmddFromDate(DateUtil.dateFromDateCount(this.managementBeginDate, d))
-      task.plan = width / this.gridX
+      task.plan = width / this.gridXX
       this.calcManHour(task)
 
       this.updateAllTasks()
@@ -939,17 +952,27 @@ export default Vue.extend({
         startManagementDay
       }
     },
+    gridXX() {
+      return this.gridX * this.zoom
+    },
+    zoom() {
+      return this.config?.zoom || 1
+    },
+    timelineMaxWidth() {
+      return this.gridXX * this.timelineMaxTerm
+    },
+
     timelineToday() {
       const x = DateUtil.dateCountFromBaseDate(
         this.managementBeginDate,
-        DateUtil.yyyymmddFromDate(new Date())) * this.gridX + (this.gridX / 2)
+        DateUtil.yyyymmddFromDate(new Date())) * this.gridXX + (this.gridXX / 2)
       return {
         transform: `translateX(${x}px)`
       }
     },
 
-    gridStartManagementDay() {
-      return `d${(14 - this.grid.startManagementDay) % 7}`
+    timelineContainerGridClass() {
+      return `d${(14 - this.grid.startManagementDay) % 7} z${this.zoom}`
     },
 
     timelineTasks() {

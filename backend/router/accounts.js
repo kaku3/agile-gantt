@@ -31,6 +31,10 @@ router.get('/:id/config', (req, res, next) => {
     if(fs.existsSync(f)) {
         json = JSON.parse(fs.readFileSync(f, 'utf8'))
     }
+    // data 変更対応
+    if(!json.zoom) {
+        json.zoom = 1
+    }
     res.json(json)
 })
 

@@ -22,4 +22,9 @@ export default class ConfigStore extends VuexModule {
   setPlugins(plugins: PluginEntity[]) {
     this._config.plugins = plugins.map(p => Object.assign({}, p))
   }
+
+  @Mutation
+  setZoom(zoom: number) {
+    this._config.zoom = zoom
+  }
 }
