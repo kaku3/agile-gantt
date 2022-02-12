@@ -3,6 +3,10 @@
     <v-toolbar
       dense
     >
+      <div class="toolbar-button" @click="print">
+        <v-icon small>mdi-printer</v-icon>
+        <div class="tool-name">Print</div>
+      </div>
       <div class="toolbar-button" @click="save">
         <v-icon small>mdi-content-save</v-icon>
         <div class="tool-name">Save</div>
@@ -447,6 +451,20 @@ export default Vue.extend({
           this.showPopup('saved!')
         })
         .catch(err => console.error(err))
+    },
+    print() {
+      const query = {}
+      const taskIds = this.tasks.filter(t => t.select).map(t => t.id)
+      if(taskIds.length > 0) {
+        query.targetTaskIds = taskIds.join(',')
+      }
+
+      const route = this.$router.resolve({
+        path: '/print-gantt',
+        query
+      })
+      console.log(route)
+      window.open(route.href, '_blank')
     },
 
     async loadConfig() {

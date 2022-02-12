@@ -108,6 +108,9 @@ export default Vue.extend({
     VueNestable,
     VueNestableHandle,
   },
+  props: {
+    targetTaskIds: Array
+  },
   data () {
     const zoom = 2
     const gridX = 5
@@ -154,6 +157,10 @@ export default Vue.extend({
     loadFromTaskRecords(taskRecords) {
       this.serialTaskId = taskRecords.length > 0 ? taskRecords.map(t => t.id).reduce((a, v) => Math.max(a, v)) + 1 : 1
       this.tasks = fromTaskRecords(taskRecords, this.resources)
+
+      if(this.targetTaskIds.length > 0) {
+        this.tasks = this.tasks.filter(t => this.targetTaskIds.includes(t.id))
+      }
 
       this.updateAllTasks()
       this.locateAllTaskTimelines()
