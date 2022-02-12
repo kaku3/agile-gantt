@@ -56,6 +56,7 @@
         </div>
       </div>
       <div class="timelines-container" :class="`z${zoom}`">
+        <div v-for="(o, i) in holidays" :key="`holiday-${i}`" class="holiday" :style="timelineHoliday(o)"></div>
         <div class="today" :style="timelineToday"></div>
         <div v-for="task in timelineTasks" :key="task.id">
           <div class="timeline-container" :class="timelineContainerGridClass">
@@ -251,6 +252,18 @@ export default Vue.extend({
     isProject(task) {
       return this.tasks.find(t => t.id === task.id) != null
     },
+    timelineHoliday(o) {
+      const [ yyyy, m, d ] = o.split('-')
+      const dd = yyyy + m.padStart(2, '0') + d.padStart(2, '0')
+      const x = DateUtil.dateCountFromBaseDate(
+        this.managementBeginDate,
+        parseInt(dd)) * this.gridXX
+      console.log(`${dd}, ${x}`)
+
+      return {
+        transform: `translateX(${x}px)`
+      }
+    }
   },
   computed: {
 
@@ -463,6 +476,7 @@ export default Vue.extend({
 }
 .timelines-pane {
   overflow: auto;
+  background-color: #f2f2f2;
   .timelines-header {
     display: flex;
     background: $color-header;
@@ -488,6 +502,13 @@ export default Vue.extend({
     @for $zoom from 1 through 5 {
       &.z#{$zoom} {
         width: #{ $time-line-max-term * $time-grid-x * $zoom };
+
+        .holiday {
+          position: absolute;
+          width: #{ $time-grid-x * $zoom };
+          height: 100%;
+          background-color: rgba($color-holiday, .75);
+        }
       }
     }
 

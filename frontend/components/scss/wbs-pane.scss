@@ -202,6 +202,13 @@
       @for $zoom from 1 through 5 {
         &.z#{$zoom} {
           width: #{ $time-line-max-term * $time-grid-x * $zoom };
+
+          .holiday {
+            position: absolute;
+            width: #{ $time-grid-x * $zoom };
+            height: 100%;
+            background-color: rgba($color-holiday, .75);
+          }
         }
       }
 
