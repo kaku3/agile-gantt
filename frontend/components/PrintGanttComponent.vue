@@ -51,12 +51,14 @@
     </div>
     <div class="timelines-pane">
       <div class="timelines-header" :class="`z${zoom}`">
-        <div v-for="i of 18" :key="i" :style="{ 'min-width': grid.dates[i-1] * gridXX + 'px'}">
-          {{ headerMonth(i) | mm }}
+        <div v-for="i of 18" :key="i" class="header-month" :style="{ 'min-width': grid.dates[i-1] * gridXX + 'px'}">
+          <div>{{ headerMonth(i) | mm }}</div>
         </div>
+        <div v-for="(o, i) in timelineHeaderMondays" :key="`monday-${i}`" class="header-monday" :style="{ 'left': o.x + 'px' }">{{ o.date }}</div>
       </div>
       <div class="timelines-container" :class="`z${zoom}`">
         <div v-for="(o, i) in holidays" :key="`holiday-${i}`" class="holiday" :style="timelineHoliday(o)"></div>
+        <div v-for="i of 18" :key="`month-${i}`" class="timeline-month" :style="{ 'left': grid.amountOfDates[i-1] * gridXX + 'px'}"></div>
         <div class="today" :style="timelineToday"></div>
         <div v-for="task in timelineTasks" :key="task.id">
           <div class="timeline-container" :class="timelineContainerGridClass">
@@ -269,16 +271,21 @@ export default Vue.extend({
 
     grid() {
       const dates = []
+      const amountOfDates = []
+      let amount = 0
       for(let i = 1; i <= 18; i++) {
         const d = new Date(this.managementBeginDate)
         d.setMonth(d.getMonth() + i)
         d.setDate(0)
         dates.push(d.getDate())
+        amount += d.getDate()
+        amountOfDates.push(amount)
       }
       let startManagementDay = this.managementBeginDate.getDay()
       console.log(startManagementDay)
       return {
         dates,
+        amountOfDates,
         startManagementDay
       }
     },
@@ -290,6 +297,25 @@ export default Vue.extend({
     },
     timelineMaxWidth() {
       return this.gridXX * this.timelineMaxTerm
+    },
+
+    /**
+     * 月曜日を算出
+     */
+    timelineHeaderMondays() {
+      const mondays = []
+      let x = (8 - this.managementBeginDate.getDay()) % 7
+      const d = new Date(this.managementBeginDate)
+      d.setDate(d.getDate() + x)
+      for(let i = 0; i < this.timelineMaxTerm / 7; i++) {
+        mondays.push({
+          x: x * this.gridXX,
+          date: d.getDate()
+        })
+        x += 7
+        d.setDate(d.getDate() + 7)
+      }
+      return mondays
     },
 
     timelineToday() {
@@ -478,6 +504,7 @@ export default Vue.extend({
   overflow: auto;
   background-color: #f2f2f2;
   .timelines-header {
+    position: relative;
     display: flex;
     background: $color-header;
     z-index: 5;
@@ -488,16 +515,36 @@ export default Vue.extend({
       }
     }
 
-    div {
-      padding: .25rem;
-      font-size: .7rem;
+    .header-month {
+      position: relative;
+      height: 25.8px;
       border-right: 1px solid #888;
       border-bottom: 1px solid #888;
+
+      > div {
+        position: absolute;
+        top: 0;
+        left: 2px;
+        font-size: .6rem;
+      }
+    }
+    .header-monday {
+      position: absolute;
+      top: 8px;
+      font-size: .7rem;
     }
   }
 
   .timelines-container {
     position: relative;
+
+    .timeline-month {
+      position: absolute;
+      width: 1px;
+      height: 100%;
+      background-color: #888;
+    }
+
 
     @for $zoom from 1 through 5 {
       &.z#{$zoom} {
