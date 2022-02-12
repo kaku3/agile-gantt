@@ -122,6 +122,7 @@
 
     <v-data-table
       no-data-text="Todoはありません"
+      v-model="select.todos"
       :headers="todoHeaders"
       :items="todoStore.todos"
       :fixed-header="true"
@@ -133,7 +134,7 @@
       dense
       class="todo-table"
       @click:row="onClickTodo"
-      @item-selected="onSelectedTodo"
+      @item-selected="onSelectTodo"
     >
       <template v-slot:item.assigneeId="{ item }">
         {{ todoAssigneeName(item.assigneeId) }}
@@ -173,6 +174,7 @@ export default {
       select: {
         assignee: null,
         task: null,
+        todos: []
       },
       form: this.emptyForm(),
       menu: {
@@ -270,8 +272,6 @@ export default {
       return this.resources?.find(r => r.id == assigneeId)?.name || ''
     },
     todoTaskName (taskId) {
-      console.log(taskId)
-      console.log(this.tasks)
       const t = this.tasks?.find(t => t.id == taskId)
       if(!t) {
         return ''
@@ -289,13 +289,15 @@ export default {
     onClickTodo(row) {
       this.setForm(row)
     },
-    onSelectedTodo({ item, value}) {
+    onSelectTodo({ item, value }) {
       if(value) {
         const todos = this.todoStore.todos.map(t => JSON.parse(JSON.stringify(t)))
         todos.splice(todos.findIndex(t => t.id == item.id), 1)
 
         this.todoStore.setTodos(todos)
         this.$emit('update', todos)
+        this.form = this.emptyForm()
+        this.select.todos = []
       }
     }
   },
