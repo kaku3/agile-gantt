@@ -205,12 +205,14 @@
           </pane>
           <pane size="65" class="timelines-pane">
             <div class="timelines-header" :class="`z${zoom}`">
-              <div v-for="i of 18" :key="i" :style="{ 'min-width': grid.dates[i-1] * gridXX + 'px'}">
-                {{ headerMonth(i) | mm }}
+              <div v-for="i of 18" :key="i" class="header-month" :style="{ 'min-width': grid.dates[i-1] * gridXX + 'px'}">
+                <div>{{ headerMonth(i) | mm }}</div>
               </div>
+              <div v-for="(o, i) in timelineHeaderMondays" :key="`monday-${i}`" class="header-monday" :style="{ 'left': o.x + 'px' }">{{ o.date }}</div>
             </div>
             <div class="timelines-container" :class="`z${zoom}`">
               <div v-for="(o, i) in holidays" :key="`holiday-${i}`" class="holiday" :style="timelineHoliday(o)"></div>
+              <div v-for="i of 18" :key="`month-${i}`" class="timeline-month" :style="{ 'left': grid.amountOfDates[i-1] * gridXX + 'px'}"></div>
               <div class="today" :style="timelineToday"></div>
               <div v-for="task in timelineTasks" :key="task.id">
                 <div class="timeline-container" :class="timelineContainerGridClass">
@@ -970,16 +972,21 @@ export default Vue.extend({
 
     grid() {
       const dates = []
+      const amountOfDates = []
+      let amount = 0
       for(let i = 1; i <= 18; i++) {
         const d = new Date(this.managementBeginDate)
         d.setMonth(d.getMonth() + i)
         d.setDate(0)
         dates.push(d.getDate())
+        amount += d.getDate()
+        amountOfDates.push(amount)
       }
       let startManagementDay = this.managementBeginDate.getDay()
       console.log(startManagementDay)
       return {
         dates,
+        amountOfDates,
         startManagementDay
       }
     },
@@ -991,6 +998,25 @@ export default Vue.extend({
     },
     timelineMaxWidth() {
       return this.gridXX * this.timelineMaxTerm
+    },
+
+    /**
+     * 月曜日を算出
+     */
+    timelineHeaderMondays() {
+      const mondays = []
+      let x = (8 - this.managementBeginDate.getDay()) % 7
+      const d = new Date(this.managementBeginDate)
+      d.setDate(d.getDate() + x)
+      for(let i = 0; i < this.timelineMaxTerm / 7; i++) {
+        mondays.push({
+          x: x * this.gridXX,
+          date: d.getDate()
+        })
+        x += 7
+        d.setDate(d.getDate() + 7)
+      }
+      return mondays
     },
 
     timelineToday() {

@@ -173,6 +173,7 @@
     }
   }
   .timelines-pane {
+    position: relative;
     overflow: auto;
     .timelines-header {
       position: sticky;
@@ -187,17 +188,36 @@
         }
       }
 
-      div {
-        padding: .25rem;
-        width: #{$time-grid-x * 30};
-        font-size: .7rem;
+      .header-month {
+        position: relative;
+        height: 25.8px;
         border-right: 1px solid #888;
         border-bottom: 1px solid #888;
+
+        > div {
+          position: absolute;
+          top: 0;
+          left: 2px;
+          font-size: .6rem;
+        }
+      }
+      .header-monday {
+        position: absolute;
+        top: 8px;
+        font-size: .7rem;
       }
     }
 
     .timelines-container {
       position: relative;
+
+      .timeline-month {
+        position: absolute;
+        width: 1px;
+        height: 100%;
+        background-color: #888;
+      }
+
 
       @for $zoom from 1 through 5 {
         &.z#{$zoom} {
