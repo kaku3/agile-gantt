@@ -350,7 +350,7 @@ export default Vue.extend({
   width: max-content;
   .tasks-header {
     display: flex;
-    min-width: 480px;
+    min-width: 640px;
     z-index: 1;
     > * {
       padding: .25rem;
@@ -417,12 +417,6 @@ export default Vue.extend({
         &:not(.show-children) + ol {
           display: none;
         }
-
-        &.has-children {
-          .task-assign-rate {
-            display: none;
-          }
-        }
       }
 
       > * {
@@ -435,6 +429,8 @@ export default Vue.extend({
           display: flex;
           padding: 0;
           flex: 1;
+          height: $line-height;
+          overflow: hidden;
         }
         &:nth-child(1) {
           padding-top: .125rem;
