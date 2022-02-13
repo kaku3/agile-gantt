@@ -100,7 +100,17 @@
       </div>
       <div class="toolbar-button" @click="onClickToggleTodo()">
         <v-icon small>mdi-clipboard-check-outline</v-icon>
-        <div class="tool-name">TODO</div>
+        <v-badge
+          :content="myTodoCount"
+          :value="myTodoCount"
+          :offset-x="myTodoCount >= 10 ? '10px' : '4px'"
+          :offset-y="myTodoCount >= 10 ? '-8px' : '4px'"
+          color="red"
+          overlap
+          :dot="myTodoCount >= 10"
+        >
+          <div class="tool-name">TODO</div>
+        </v-badge>
       </div>
     </v-toolbar>
     <splitpanes horizontal class="default-theme" style="height: calc(100vh - 80px)" @resize="onResizeMainContainer">
@@ -1092,6 +1102,14 @@ export default Vue.extend({
         .flatMap(t => t.children)
         .filter(t => t.select)[0]
     },
+
+    myTodoCount() {
+      const todos = this.todoStore?.todos || []
+      if(todos.length === 0) {
+        return 0
+      }
+      return this.todoStore.todos.filter(todo => todo.assigneeId == this.$auth.user.id).length
+    }
   },
   filters: {
     endDate(t) {

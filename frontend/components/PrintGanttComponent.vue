@@ -530,7 +530,7 @@ export default Vue.extend({
     }
     .header-monday {
       position: absolute;
-      top: 8px;
+      top: 11px;
       font-size: .7rem;
     }
   }
