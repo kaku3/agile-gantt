@@ -539,7 +539,6 @@ export default Vue.extend({
       const x = DateUtil.dateCountFromBaseDate(
         this.managementBeginDate,
         parseInt(dd)) * this.gridXX
-      console.log(`${dd}, ${x}`)
 
       return {
         transform: `translateX(${x}px)`
@@ -743,7 +742,7 @@ export default Vue.extend({
     },
 
     onChangeTaskName(task) {
-      this.emitTasks()
+      this.updateAllTasks()
     },
 
     onClickTaskAssignee(task) {

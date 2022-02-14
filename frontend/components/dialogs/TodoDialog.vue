@@ -161,7 +161,6 @@ import TaskRecordStore from '~/store/TaskRecordStore'
 export default {
   props: {
     value: Boolean,
-    task: Object
   },
   data () {
     return {
@@ -172,8 +171,8 @@ export default {
         ]
       },
       select: {
-        assignee: null,
-        task: null,
+        assigneeId: null,
+        taskId: null,
         todos: []
       },
       form: this.emptyForm(),
@@ -234,12 +233,8 @@ export default {
       }
     },
     setForm(o) {
-      if(o.assigneeId) {
-        this.assignee = this.resources?.find(r => r.id == this.form.assigneeId)
-      }
-      if(o.taskId) {
-        this.task = this.tasks?.find(t => t.id == this.form.taskId)
-      }
+      this.select.assigneeId = o.assigneeId
+      this.select.taskId = o.taskId
       this.form = JSON.parse(JSON.stringify(o))
     },
 
@@ -251,18 +246,13 @@ export default {
       return name.indexOf(search) > -1 || email.indexOf(search) > -1
     },
     taskFilter(item, queryText, itemText) {
-      const name = item.parentId ? `${this.tasks[item.parentId].name} ${item.name}` : item.name
+      const name = item.name
       const search = queryText.toLowerCase()
 
       return name.toLowerCase().indexOf(search) > -1
     },
     taskName(t) {
-      let name = t.name
-      const p = this.tasks.find(tt => t.parentId === tt.id)
-      if(p) {
-        name = `${p.name} ${name}`
-      }
-      return name
+      return t.name
     },
     newTodoId(todos) {
       return todos?.length > 0 ? todos.map(t => t.id).reduce((a, v) => Math.max(a, v)) + 1 : 1
@@ -287,7 +277,13 @@ export default {
     },
 
     onClickTodo(row) {
-      this.setForm(row)
+      if(row.id == this.form.id) {
+        this.form = this.emptyForm()
+        this.select.assigneeId = null
+        this.select.taskId = null
+      } else {
+        this.setForm(row)
+      }
     },
     onSelectTodo({ item, value }) {
       if(value) {
@@ -315,7 +311,7 @@ export default {
       return this.resourceStore.resources || []
     },
     tasks() {
-      return this.taskRecordStore.taskRecords || []
+      return this.taskRecordStore.taskRecords?.filter(t => !t.parentId)
     },
 
     todoHeaders() {
