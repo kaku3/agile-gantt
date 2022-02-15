@@ -659,7 +659,7 @@ export default Vue.extend({
           )
           const e = new Date(
             t.children
-              .map(t => DateUtil.dateFromDateCount(DateUtil.dateFromYYYYMMDD(t.beginDate), t.plan).getTime() - 1)
+              .map(t => DateUtil.dateFromDateCount(DateUtil.dateFromYYYYMMDD(t.beginDate), t.plan).getTime())
               .reduce((a, v) => Math.max(a, v))
           )
           t.beginDate = DateUtil.yyyymmddFromDate(b)
