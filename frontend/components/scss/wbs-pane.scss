@@ -141,7 +141,7 @@
             }
 
             &:not(:hover) {
-              .task-info-tool {
+              .task-info-tool.hover-tool {
                 display: none;
               }
             }

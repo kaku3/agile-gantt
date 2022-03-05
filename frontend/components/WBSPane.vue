@@ -154,26 +154,26 @@
                         @change="onChangeTaskName(item)"
                         @keypress.enter.prevent="focusNextTaskItem"
                       />
-                      <span @click="onClickTaskDetailDialog(item)">
-                        <v-icon
-                          small
-                          class="task-info-tool detail"
-                        >
-                          mdi-file-document-edit-outline
-                        </v-icon>
-                      </span>
                       <span @click="onClickToggleResource(item)">
                         <v-icon v-if="!isChild"
-                          class="task-info-tool toggle-resource"
+                          class="task-info-tool hover-tool toggle-resource"
                         >
                           mdi-account-outline
                         </v-icon>
                       </span>
                       <span @click="onClickShowChildren(item)">
                         <v-icon v-if="!isChild"
-                          class="task-info-tool toggle-show"
+                          class="task-info-tool hover-tool toggle-show"
                         >
                           {{item | projectShowIcon}}
+                        </v-icon>
+                      </span>
+                      <span @click="onClickTaskDetailDialog(item)">
+                        <v-icon
+                          small
+                          class="task-info-tool detail"
+                        >
+                          mdi-file-document-edit-outline
                         </v-icon>
                       </span>
                     </div>
@@ -758,9 +758,11 @@ export default Vue.extend({
     },
 
     onClickTaskDetailDialog(task) {
-      this.taskDetail = {
-        task,
-        showDialog: true
+      if(this.taskDetail.showDialog && this.taskDetail.task === task) {
+        this.taskDetail.showDialog = false
+      } else {
+        this.taskDetail.task = task
+        this.taskDetail.showDialog = true
       }
     },
 
