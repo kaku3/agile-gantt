@@ -142,7 +142,7 @@
                 @change="onChangeTaskItem"
               >
                 <template slot-scope="{ item, isChild }">
-                  <input type="checkbox" v-model="item.select" class="task-item-select">
+                  <input type="checkbox" v-model="item.select" class="task-item-select" @change="onChangeSelectTask(item)">
                   <VueNestableHandle
                     :item="item"
                   >
@@ -719,6 +719,35 @@ export default Vue.extend({
     //
     // tasks
     //
+    onChangeSelectTask(task) {
+      // 選択解除時は特に処理なし
+      if(!task.select) {
+        return
+      }
+      if(!task.parent) {
+        // 親操作：自分以外のタスクはすべて選択解除
+        this.tasks.forEach(t => {
+          if(t !== task) {
+            t.select = false
+          }
+          t.children.forEach(tt => {
+            tt.select = false
+          })
+        })
+      } else {
+        // 子操作：同じプロジェクト以外のタスクはすべて選択解除
+        this.tasks.forEach(t => {
+          t.select = false
+          if(t != task.parent) {
+            t.children.forEach(tt => {
+              tt.select = false
+            })
+          }
+        })
+      }
+      console.log(task)
+    },
+
     focusNextTaskItem(event) {
       const elements = document.getElementsByClassName(event.target.className)
       const d = event.shiftKey ? elements.length - 1 : 1
