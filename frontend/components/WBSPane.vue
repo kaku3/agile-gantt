@@ -137,12 +137,12 @@
               <VueNestable
                 v-model="tasks"
                 :max-depth="2"
-                :threshold="14"
+                :threshold="Number.MAX_SAFE_INTEGER"
                 :collapsed="true"
                 @change="onChangeTaskItem"
               >
                 <template slot-scope="{ item, isChild }">
-                  <input type="checkbox" v-model="item.select" class="task-item-select">
+                  <input type="checkbox" v-model="item.select" class="task-item-select" @change="onChangeSelectTask(item)">
                   <VueNestableHandle
                     :item="item"
                   >
@@ -154,6 +154,20 @@
                         @change="onChangeTaskName(item)"
                         @keypress.enter.prevent="focusNextTaskItem"
                       />
+                      <span @click="onClickToggleResource(item)">
+                        <v-icon v-if="!isChild"
+                          class="task-info-tool hover-tool toggle-resource"
+                        >
+                          mdi-account-outline
+                        </v-icon>
+                      </span>
+                      <span @click="onClickShowChildren(item)">
+                        <v-icon v-if="!isChild"
+                          class="task-info-tool hover-tool toggle-show"
+                        >
+                          {{item | projectShowIcon}}
+                        </v-icon>
+                      </span>
                       <span @click="onClickTaskDetailDialog(item)">
                         <v-icon
                           small
@@ -162,22 +176,8 @@
                           mdi-file-document-edit-outline
                         </v-icon>
                       </span>
-                      <span @click="onClickToggleResource(item)">
-                        <v-icon v-if="!isChild"
-                          class="task-info-tool toggle-resource"
-                        >
-                          mdi-account-outline
-                        </v-icon>
-                      </span>
-                      <span @click="onClickShowChildren(item)">
-                        <v-icon v-if="!isChild"
-                          class="task-info-tool toggle-show"
-                        >
-                          {{item | projectShowIcon}}
-                        </v-icon>
-                      </span>
                     </div>
-                    <div @click="onClickTaskAssignee(item)">
+                    <div :id="`task-assignee-${item.id}`" @click="onClickTaskAssignee(item)">
                       {{ item.assignee | resourceName }}
                     </div>
                     <div>
@@ -261,6 +261,29 @@
         />
       </pane>
     </splitpanes>
+    <v-card
+      v-if="taskAssigneeSelectMenu.show"
+      class="task-assignee-select-menu elevation-2 d-flex"
+      :style="taskAssigneeSelectMenu.style"
+      :class="taskAssigneeSelectMenu.class"
+    >
+      <div class="d-flex flex-column buttons-container">
+        <v-btn x-small outlined @click="taskAssigneeSelectMenu.show = false">Close</v-btn>
+        <v-btn x-small @click="onUpdateTaskAssignee" color="primary">Update</v-btn>
+      </div>
+      <v-autocomplete
+        ref="taskAssigneeSelectMenuAssignee"
+        v-model="taskAssigneeSelectMenu.select"
+        :items="resources"
+        :item-text="taskAssigneeSelectMenuTaskAssignee"
+        :filter="taskAssigneeSelectMenuFilter"
+        item-value="id"
+        autofocus
+        clearable
+        dense
+      >
+      </v-autocomplete>
+    </v-card>
     <TaskDetailDialog v-model="taskDetail.showDialog" :task="taskDetail.task"></TaskDetailDialog>
     <TodoDialog v-model="todo.showDialog" @update="onUpdateTodos"></TodoDialog>
     <AddProjectDialog v-model="addProject.showDialog" @addProject="onAddProject"></AddProjectDialog>
@@ -342,6 +365,18 @@ export default Vue.extend({
       gridX,
       lineHeight: 24,
       tasks: [],
+      taskAssigneeSelectMenu: {
+        show: false,
+        style: {
+          top: 0,
+          left: 0,
+        },
+        class: {
+          show: false
+        },
+        task: null,
+        select: null
+      },
       resource: {
         containerHeight: '',
         select: []
@@ -560,7 +595,7 @@ export default Vue.extend({
           t.assignee = assignee
           project.children.push(t)
         }
-        this.tasks = this.tasks.concat(project)
+        this.addProjectItem(project)
       } else {
         try {
           const p = records.shift()
@@ -587,13 +622,22 @@ export default Vue.extend({
             }
             project.children.push(t)
           }
-          this.tasks = this.tasks.concat(project)
+          this.addProjectItem(project)
         } catch(e) {
           console.error(e)
         }
       }
       this.locateAllTaskTimelines()
       this.updateAllTasks()
+    },
+    addProjectItem(project) {
+      if(this.isSelectProjectTaskItem) {
+        // 選択あり：手前に追加
+        this.tasks.splice(this.tasks.findIndex(t => t.select), 0, project)
+      } else {
+        // 選択なし。最後尾に追加
+        this.tasks = this.tasks.concat(project)
+      }
     },
     addTaskItem() {
       const tasks = this.tasks.filter(t => t.select)
@@ -719,6 +763,35 @@ export default Vue.extend({
     //
     // tasks
     //
+    onChangeSelectTask(task) {
+      // 選択解除時は特に処理なし
+      if(!task.select) {
+        return
+      }
+      if(!task.parent) {
+        // 親操作：自分以外のタスクはすべて選択解除
+        this.tasks.forEach(t => {
+          if(t !== task) {
+            t.select = false
+          }
+          t.children.forEach(tt => {
+            tt.select = false
+          })
+        })
+      } else {
+        // 子操作：同じプロジェクト以外のタスクはすべて選択解除
+        this.tasks.forEach(t => {
+          t.select = false
+          if(t != task.parent) {
+            t.children.forEach(tt => {
+              tt.select = false
+            })
+          }
+        })
+      }
+      console.log(task)
+    },
+
     focusNextTaskItem(event) {
       const elements = document.getElementsByClassName(event.target.className)
       const d = event.shiftKey ? elements.length - 1 : 1
@@ -729,9 +802,11 @@ export default Vue.extend({
     },
 
     onClickTaskDetailDialog(task) {
-      this.taskDetail = {
-        task,
-        showDialog: true
+      if(this.taskDetail.showDialog && this.taskDetail.task === task) {
+        this.taskDetail.showDialog = false
+      } else {
+        this.taskDetail.task = task
+        this.taskDetail.showDialog = true
       }
     },
 
@@ -746,11 +821,48 @@ export default Vue.extend({
     },
 
     onClickTaskAssignee(task) {
-      const rr = this.resource.select
-      task.assignee = rr.length > 0 ? rr[0] : null
+      const e = document.getElementById(`task-assignee-${task.id}`)
+      const left = (e.getBoundingClientRect().left + window.scrollX) + 'px'
+      const top = (e.getBoundingClientRect().top + window.scrollY) + 'px'
 
+      // 前回選択値がなければ、現在設定されている値を表示
+      if(!this.taskAssigneeSelectMenu.select) {
+        this.taskAssigneeSelectMenu.select = task.assignee
+      }
+
+      this.taskAssigneeSelectMenu = {
+        ...this.taskAssigneeSelectMenu,
+        task,
+        style: {
+          left,
+          top,
+        },
+        class: {
+          show: true
+        },
+        show: true
+      }
+    },
+    onUpdateTaskAssignee() {
+      this.taskAssigneeSelectMenu.task.assignee =
+        this.taskAssigneeSelectMenu.select ?
+          this.resources.find(r => r.id === this.taskAssigneeSelectMenu.select) :
+          null
       this.updateAllTasks()
     },
+    taskAssigneeSelectMenuTaskAssignee(item) {
+      const groups = this.groupStore?.groups
+      const group = groups.find(g => g.id === item.groupId) || {}
+      return `${item.name} (${group.group} ${group.name})`
+    },
+    taskAssigneeSelectMenuFilter(item, queryText, itemText) {
+      const groups = this.groupStore?.groups
+      const group = groups.find(g => g.id === item.groupId) || {}
+
+      queryText = queryText.toLocaleLowerCase()
+      return [ group.group, group.name, item.name, item.email, item.memo ].map(text => text.toLocaleLowerCase()).some(t => t.indexOf(queryText) >= 0)
+    },
+
     onChangeEstimate(task) {
       this.updateAllTasks()
     },
