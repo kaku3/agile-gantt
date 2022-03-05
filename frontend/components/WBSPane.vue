@@ -827,7 +827,7 @@ export default Vue.extend({
 
       // 前回選択値がなければ、現在設定されている値を表示
       if(!this.taskAssigneeSelectMenu.select) {
-        this.taskAssigneeSelectMenu.select = task.assignee
+        this.taskAssigneeSelectMenu.select = task.assignee.id
       }
 
       this.taskAssigneeSelectMenu = {
@@ -844,6 +844,7 @@ export default Vue.extend({
       }
     },
     onUpdateTaskAssignee() {
+      debugger
       this.taskAssigneeSelectMenu.task.assignee =
         this.taskAssigneeSelectMenu.select ?
           this.resources.find(r => r.id === this.taskAssigneeSelectMenu.select) :
