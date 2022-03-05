@@ -560,7 +560,7 @@ export default Vue.extend({
           t.assignee = assignee
           project.children.push(t)
         }
-        this.tasks = this.tasks.concat(project)
+        this.addProjectItem(project)
       } else {
         try {
           const p = records.shift()
@@ -587,13 +587,22 @@ export default Vue.extend({
             }
             project.children.push(t)
           }
-          this.tasks = this.tasks.concat(project)
+          this.addProjectItem(project)
         } catch(e) {
           console.error(e)
         }
       }
       this.locateAllTaskTimelines()
       this.updateAllTasks()
+    },
+    addProjectItem(project) {
+      if(this.isSelectProjectTaskItem) {
+        // 選択あり：手前に追加
+        this.tasks.splice(this.tasks.findIndex(t => t.select), 0, project)
+      } else {
+        // 選択なし。最後尾に追加
+        this.tasks = this.tasks.concat(project)
+      }
     },
     addTaskItem() {
       const tasks = this.tasks.filter(t => t.select)
