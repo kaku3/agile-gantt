@@ -177,7 +177,7 @@
                         </v-icon>
                       </span>
                     </div>
-                    <div @click="onClickTaskAssignee(item)">
+                    <div :id="`task-assignee-${item.id}`" @click="onClickTaskAssignee(item)">
                       {{ item.assignee | resourceName }}
                     </div>
                     <div>
@@ -261,6 +261,29 @@
         />
       </pane>
     </splitpanes>
+    <v-card
+      v-if="taskAssigneeSelectMenu.show"
+      class="task-assignee-select-menu elevation-2 d-flex"
+      :style="taskAssigneeSelectMenu.style"
+      :class="taskAssigneeSelectMenu.class"
+    >
+      <div class="d-flex flex-column buttons-container">
+        <v-btn x-small outlined @click="taskAssigneeSelectMenu.show = false">Close</v-btn>
+        <v-btn x-small @click="onUpdateTaskAssignee" color="primary">Update</v-btn>
+      </div>
+      <v-autocomplete
+        ref="taskAssigneeSelectMenuAssignee"
+        v-model="taskAssigneeSelectMenu.select"
+        :items="resources"
+        :item-text="taskAssigneeSelectMenuTaskAssignee"
+        :filter="taskAssigneeSelectMenuFilter"
+        item-value="id"
+        autofocus
+        clearable
+        dense
+      >
+      </v-autocomplete>
+    </v-card>
     <TaskDetailDialog v-model="taskDetail.showDialog" :task="taskDetail.task"></TaskDetailDialog>
     <TodoDialog v-model="todo.showDialog" @update="onUpdateTodos"></TodoDialog>
     <AddProjectDialog v-model="addProject.showDialog" @addProject="onAddProject"></AddProjectDialog>
@@ -342,6 +365,18 @@ export default Vue.extend({
       gridX,
       lineHeight: 24,
       tasks: [],
+      taskAssigneeSelectMenu: {
+        show: false,
+        style: {
+          top: 0,
+          left: 0,
+        },
+        class: {
+          show: false
+        },
+        task: null,
+        select: null
+      },
       resource: {
         containerHeight: '',
         select: []
@@ -786,11 +821,48 @@ export default Vue.extend({
     },
 
     onClickTaskAssignee(task) {
-      const rr = this.resource.select
-      task.assignee = rr.length > 0 ? rr[0] : null
+      const e = document.getElementById(`task-assignee-${task.id}`)
+      const left = (e.getBoundingClientRect().left + window.scrollX) + 'px'
+      const top = (e.getBoundingClientRect().top + window.scrollY) + 'px'
 
+      // 前回選択値がなければ、現在設定されている値を表示
+      if(!this.taskAssigneeSelectMenu.select) {
+        this.taskAssigneeSelectMenu.select = task.assignee
+      }
+
+      this.taskAssigneeSelectMenu = {
+        ...this.taskAssigneeSelectMenu,
+        task,
+        style: {
+          left,
+          top,
+        },
+        class: {
+          show: true
+        },
+        show: true
+      }
+    },
+    onUpdateTaskAssignee() {
+      this.taskAssigneeSelectMenu.task.assignee =
+        this.taskAssigneeSelectMenu.select ?
+          this.resources.find(r => r.id === this.taskAssigneeSelectMenu.select) :
+          null
       this.updateAllTasks()
     },
+    taskAssigneeSelectMenuTaskAssignee(item) {
+      const groups = this.groupStore?.groups
+      const group = groups.find(g => g.id === item.groupId) || {}
+      return `${item.name} (${group.group} ${group.name})`
+    },
+    taskAssigneeSelectMenuFilter(item, queryText, itemText) {
+      const groups = this.groupStore?.groups
+      const group = groups.find(g => g.id === item.groupId) || {}
+
+      queryText = queryText.toLocaleLowerCase()
+      return [ group.group, group.name, item.name, item.email, item.memo ].map(text => text.toLocaleLowerCase()).some(t => t.indexOf(queryText) >= 0)
+    },
+
     onChangeEstimate(task) {
       this.updateAllTasks()
     },
