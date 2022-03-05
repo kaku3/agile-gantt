@@ -137,7 +137,7 @@
               <VueNestable
                 v-model="tasks"
                 :max-depth="2"
-                :threshold="14"
+                :threshold="Number.MAX_SAFE_INTEGER"
                 :collapsed="true"
                 @change="onChangeTaskItem"
               >
