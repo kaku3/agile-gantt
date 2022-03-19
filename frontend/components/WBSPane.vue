@@ -15,7 +15,7 @@
         <v-icon small>mdi-folder-plus-outline</v-icon>
         <div class="tool-name">Add<br/>Project</div>
       </div>
-      <div class="toolbar-button" :class="{ disabled:!isSelectProjectTaskItem }" @click="addTaskItem">
+      <div class="toolbar-button" :class="{ disabled:!isSelectTaskItem }" @click="addTaskItem">
         <v-icon small>mdi-plus</v-icon>
         <div class="tool-name">Add<br/>Task</div>
       </div>
@@ -269,7 +269,7 @@
     >
       <div class="d-flex flex-column buttons-container">
         <v-btn x-small outlined @click="taskAssigneeSelectMenu.show = false">Close</v-btn>
-        <v-btn x-small @click="onUpdateTaskAssignee" color="primary">Update</v-btn>
+        <v-btn x-small @click="onUpdateTaskAssignee" color="primary">Set</v-btn>
       </div>
       <v-autocomplete
         ref="taskAssigneeSelectMenuAssignee"
@@ -640,11 +640,19 @@ export default Vue.extend({
       }
     },
     addTaskItem() {
-      const tasks = this.tasks.filter(t => t.select)
-      if(tasks.length !== 1) {
-        return
+      const task = this.tasks.find(t => t.select)
+      if(task) {
+        // projectの末尾に追加
+        task.children.push(this.newTaskItem())
+      } else {
+        // 選択された task の上に追加
+        const tasks = this.tasks.flatMap(t => t.children).filter(t => t.select)
+        if(tasks.length !== 1) {
+          return
+        }
+        const children = tasks[0].parent.children
+        children.splice(children.findIndex(t => t.select), 0, this.newTaskItem())
       }
-      tasks[0].children.push(this.newTaskItem())
       this.updateAllTasks()
     },
     newTaskItem(name = '') {
@@ -827,7 +835,8 @@ export default Vue.extend({
 
       // 前回選択値がなければ、現在設定されている値を表示
       if(!this.taskAssigneeSelectMenu.select) {
-        this.taskAssigneeSelectMenu.select = task.assignee.id
+        //現在設定されていない場合もある
+        this.taskAssigneeSelectMenu.select = task.assignee?.id || null
       }
 
       this.taskAssigneeSelectMenu = {
@@ -861,7 +870,10 @@ export default Vue.extend({
       const group = groups.find(g => g.id === item.groupId) || {}
 
       queryText = queryText.toLocaleLowerCase()
-      return [ group.group, group.name, item.name, item.email, item.memo ].map(text => text.toLocaleLowerCase()).some(t => t.indexOf(queryText) >= 0)
+      return [ group.group, group.name, item.name, item.email, item.memo ]
+        .filter(t => t)
+        .map(text => text.toLocaleLowerCase())
+        .some(t => t.indexOf(queryText) >= 0)
     },
 
     onChangeEstimate(task) {
