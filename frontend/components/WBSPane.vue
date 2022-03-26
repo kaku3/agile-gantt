@@ -670,20 +670,25 @@ export default Vue.extend({
       }
 
       if(this.isSelectProjectTaskItem) {
+        // project全体を clone
         const s = this.selectedProjectTaskItem
         const p = cloneTaskEntity(this.serialTaskId++, s)
         s.children.forEach(c => {
           const cc = cloneTaskEntity(this.serialTaskId++, c)
           p.children.push(cc)
         })
-        this.tasks.splice(this.tasks.findIndex(t => t.id === s.id), 0, p)
+        this.tasks.splice(this.tasks.findIndex(t => t.id === s.id) + 1, 0, p)
       } else {
+        // taskを clone
         const s = this.selectedTaskItem
         const task = cloneTaskEntity(this.serialTaskId++, s)
-        s.parent.children.splice(s.parent.children.findIndex(c => c.id === s.id), 0, task)
+        s.parent.children.splice(s.parent.children.findIndex(c => c.id === s.id) + 1, 0, task)
       }
 
       this.updateAllTasks()
+      this.$nextTick(() => {
+        this.locateAllTaskTimelines()
+      })
     },
 
     deleteSelectedTaskItems() {
