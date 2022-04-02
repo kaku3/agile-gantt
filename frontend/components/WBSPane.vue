@@ -140,6 +140,9 @@
                 :threshold="Number.MAX_SAFE_INTEGER"
                 :collapsed="true"
                 @change="onChangeTaskItem"
+                :hooks="{
+                  'beforeMove': onBeforeMoveTaskItem
+                }"
               >
                 <template slot-scope="{ item, isChild }">
                   <input type="checkbox" v-model="item.select" class="task-item-select" @change="onChangeSelectTask(item)">
@@ -651,9 +654,12 @@ export default Vue.extend({
           return
         }
         const children = tasks[0].parent.children
-        children.splice(children.findIndex(t => t.select), 0, this.newTaskItem())
+        children.splice(children.findIndex(t => t.select) + 1, 0, this.newTaskItem())
       }
       this.updateAllTasks()
+      this.$nextTick(() => {
+        this.locateAllTaskTimelines()
+      })
     },
     newTaskItem(name = '') {
       const managementBeginDate = this.managementBeginDate
@@ -735,7 +741,6 @@ export default Vue.extend({
           t.estimate = t.children
             .map(tt => Number(tt.estimate))
             .reduce((a, v) => a + v)
-          console.log(t.estimate)
           // 予定工数
           t.planManHour = t.children
             .map(tt => Number(tt.planManHour))
@@ -821,6 +826,14 @@ export default Vue.extend({
         this.taskDetail.task = task
         this.taskDetail.showDialog = true
       }
+    },
+
+    onBeforeMoveTaskItem({ dragItem, pathFrom, pathTo }) {
+      // task <-> project の移動はできない
+      if(pathFrom.length !== pathTo.length) {
+        return false
+      }
+      return true
     },
 
     onChangeTaskItem(value, options) {
