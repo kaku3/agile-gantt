@@ -80,42 +80,7 @@ export default {
     // starting editor's content
     content: ''
   }),
-  methods: {
-    async onClose() {
-      await this.save(this.task.id)
-      this.show = false
-    },
-    async load (id) {
-      console.log(`+ load(${id})`)
-      const { data } = await this.$axios.get(`/tasks/${id}`)
-      console.log(data.content)
-      data.content += `<p><strong>${dateformat(new Date(), 'yyyy-mm-dd HH:MM')}</strong></p><p></p>`
-      this.content = data.content
 
-      this.$nextTick(() => {
-        const c = document.querySelector('[component-class=task-detail-dialog] .tiptap-vuetify-editor .tiptap-vuetify-editor__content')
-        const e = document.querySelector('[component-class=task-detail-dialog] .tiptap-vuetify-editor .tiptap-vuetify-editor__content .ProseMirror')
-        e.focus()
-
-        const range = document.createRange()
-        const selection = window.getSelection()
-
-        range.setStart(e.childNodes[e.childNodes.length - 1], 0)
-        range.collapse(true)
-
-        selection.removeAllRanges()
-        selection.addRange(range)
-
-        c.scrollTop = c.scrollHeight
-      })
-    },
-    async save(id) {
-      console.log(`+ save(${id})`)
-      await this.$axios.post(`/tasks/${id}`, {
-        content: this.content
-      })
-    }
-  },
   computed: {
     taskRecordStore() {
       return getModule(TaskRecordStore, this.$store)
@@ -159,7 +124,47 @@ export default {
         this.load(v.id)
       }
     }
-  }
+  },
+
+  methods: {
+    async onClose() {
+      await this.save(this.task.id)
+      this.show = false
+    },
+    async load (id) {
+      console.log(`+ load(${id})`)
+      const { data } = await this.$axios.get(`/tasks/${id}`)
+      console.log(data.content)
+      data.content += `<p><strong>${dateformat(new Date(), 'yyyy-mm-dd HH:MM')}</strong></p><p></p>`
+      this.content = data.content
+
+      // focus を当てて、最下行にカーソルを異動
+      this.$nextTick(() => {
+        const c = document.querySelector('[component-class=task-detail-dialog] .tiptap-vuetify-editor .tiptap-vuetify-editor__content')
+        const e = document.querySelector('[component-class=task-detail-dialog] .tiptap-vuetify-editor .tiptap-vuetify-editor__content .ProseMirror')
+        e.focus()
+
+        const range = document.createRange()
+        const selection = window.getSelection()
+
+        range.setStart(e.childNodes[e.childNodes.length - 1], 0)
+        range.collapse(true)
+
+        selection.removeAllRanges()
+        selection.addRange(range)
+
+        c.scrollTop = c.scrollHeight
+      })
+    },
+    async save(id) {
+      console.log(`+ save(${id})`)
+      await this.$axios.post(`/tasks/${id}`, {
+        content: this.content
+      })
+      this.$emit('update', { id, content: this.content })
+    }
+  },
+
 }
 </script>
 <style lang="scss" scoped>

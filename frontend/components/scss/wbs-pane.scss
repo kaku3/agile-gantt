@@ -1,7 +1,6 @@
 @import './wbs-common';
 
 .wbs-pane {
-  width: 100%;
 
   header {
     z-index: 6;
@@ -11,19 +10,16 @@
     max-height: calc(100vh - 48px);
   }
   .tasks-pane {
-    overflow: scroll;
-    &::-webkit-scrollbar {
-      width: 0;
-    }
+    overflow-y: hidden;
+    overflow-x: scroll;
     .tasks-header, .tasks-container {
-      min-width: 480px;
+      min-width: 640px;
     }
 
     .tasks-header {
       position: sticky;
       top: 0;
       display: flex;
-      min-width: 480px;
       z-index: 1;
       > * {
         padding: .25rem;
@@ -36,6 +32,7 @@
         &:nth-child(1) {
           flex: 1;
           padding: 0;
+          min-width: 216px;
           > *:first-child {
             padding: .25rem;
           }
@@ -132,6 +129,7 @@
             display: flex;
             padding: 0;
             flex: 1;
+            min-width: 160px;
             > input {
               padding: .125rem .25rem;
               text-align: left;

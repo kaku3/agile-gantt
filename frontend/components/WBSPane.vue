@@ -175,6 +175,7 @@
                         <v-icon
                           small
                           class="task-info-tool detail"
+                          :class="{ 'orange--text text--lighten-1': item.hasDetail }"
                         >
                           mdi-file-document-edit-outline
                         </v-icon>
@@ -287,7 +288,7 @@
       >
       </v-autocomplete>
     </v-card>
-    <TaskDetailDialog v-model="taskDetail.showDialog" :task="taskDetail.task"></TaskDetailDialog>
+    <TaskDetailDialog v-model="taskDetail.showDialog" :task="taskDetail.task" @update="onUpdateTaskDetail"></TaskDetailDialog>
     <TodoDialog v-model="todo.showDialog" @update="onUpdateTodos"></TodoDialog>
     <AddProjectDialog v-model="addProject.showDialog" @addProject="onAddProject"></AddProjectDialog>
     <v-snackbar
@@ -299,6 +300,8 @@
 </template>
 <script>
 import Vue from 'vue'
+import { getModule } from 'vuex-module-decorators'
+
 import dateformat from 'dateformat'
 import { Splitpanes, Pane } from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
@@ -306,7 +309,8 @@ import { VueNestable, VueNestableHandle } from 'vue-nestable'
 
 import VueDraggableResizable from 'vue-draggable-resizable'
 import 'vue-draggable-resizable/dist/VueDraggableResizable.css'
-Vue.component('vue-draggable-resizable', VueDraggableResizable)
+
+import io from 'socket.io-client'
 
 import ResourceComponent from '~/components/ResourceComponent.vue'
 import AddProjectDialog from '~/components/dialogs/AddProjectDialog.vue'
@@ -325,7 +329,6 @@ import {
   fromTaskRecords
 } from '~/models/Task'
 
-import { getModule } from 'vuex-module-decorators'
 import HolidayStore from '~/store/HolidayStore'
 import GroupStore from '~/store/GroupStore'
 import ResourceStore from '~/store/ResourceStore'
@@ -334,7 +337,7 @@ import TodoStore from '~/store/TodoStore'
 
 import ConfigStore from '~/store/ConfigStore'
 
-import io from 'socket.io-client'
+Vue.component('vue-draggable-resizable', VueDraggableResizable)
 
 export default Vue.extend({
   components: {
@@ -347,6 +350,38 @@ export default Vue.extend({
     TaskDetailDialog,
     TodoDialog
   },
+
+  filters: {
+    endDate(t) {
+      return DateUtil.yyyymmddFormDateCount(t.beginDate, t.plan - 1)
+    },
+
+    mmdd(d) {
+      const { mm, dd } = DateUtil.yyyymmddObject(d)
+      return `${mm.toString().padStart(2, '0')}/${dd.toString().padStart(2, '0')}`
+    },
+    mm(d) {
+      return dateformat(d, 'mm')
+    },
+    workloadUnit(v) {
+      return DateUtil.workloadUnit(v)
+    },
+    resourceName(r) {
+      return r?.name || ''
+    },
+    timelineTaskName(t) {
+      return t.name
+    },
+    timelineTaskAssgnees(t) {
+      return Array.from(new Set([ t.assignee, ...t.children.map(tt => tt.assignee) ]))
+              .filter(r => r?.name)
+              .map(r => r?.name).join(',')
+    },
+    projectShowIcon(t) {
+      return t.showChildren ? 'mdi-eye' : 'mdi-eye-off'
+    }
+  },
+
   data () {
     const managementBeginDate = new Date()
     managementBeginDate.setMonth(managementBeginDate.getMonth() - 2)
@@ -405,6 +440,180 @@ export default Vue.extend({
       }
     }
   },
+
+  computed: {
+    holidayStore() {
+      return getModule(HolidayStore, this.$store)
+    },
+    groupStore() {
+      return getModule(GroupStore, this.$store)
+    },
+    resourceStore() {
+      return getModule(ResourceStore, this.$store)
+    },
+    taskRecordStore() {
+      return getModule(TaskRecordStore, this.$store)
+    },
+    todoStore() {
+      return getModule(TodoStore, this.$store)
+    },
+    configStore() {
+      return getModule(ConfigStore, this.$store)
+    },
+
+    config: {
+      get() {
+        const _managementBeginDate = dateformat(this.managementBeginDate, 'yyyy-mm')
+        return this.configStore?.config || {
+          closeProjects: [],
+          managementBeginDate: _managementBeginDate
+        }
+      },
+      set(v) {
+        this.configStore.setConfig(v)
+      }
+    },
+
+    resources() {
+      return this.resourceStore?.resources || []
+    },
+
+    holidays() {
+      return this.holidayStore?.holidayDates || []
+    },
+
+    grid() {
+      const dates = []
+      const amountOfDates = []
+      let amount = 0
+      for(let i = 1; i <= 18; i++) {
+        const d = new Date(this.managementBeginDate)
+        d.setMonth(d.getMonth() + i)
+        d.setDate(0)
+        dates.push(d.getDate())
+        amount += d.getDate()
+        amountOfDates.push(amount)
+      }
+      let startManagementDay = this.managementBeginDate.getDay()
+      console.log(startManagementDay)
+      return {
+        dates,
+        amountOfDates,
+        startManagementDay
+      }
+    },
+    gridXX() {
+      return this.gridX * this.zoom
+    },
+    zoom() {
+      return this.config?.zoom || 1
+    },
+    timelineMaxWidth() {
+      return this.gridXX * this.timelineMaxTerm
+    },
+
+    /**
+     * 月曜日を算出
+     */
+    timelineHeaderMondays() {
+      const mondays = []
+      let x = (8 - this.managementBeginDate.getDay()) % 7
+      const d = new Date(this.managementBeginDate)
+      d.setDate(d.getDate() + x)
+      for(let i = 0; i < this.timelineMaxTerm / 7; i++) {
+        mondays.push({
+          x: x * this.gridXX,
+          date: d.getDate()
+        })
+        x += 7
+        d.setDate(d.getDate() + 7)
+      }
+      return mondays
+    },
+
+    timelineToday() {
+      const x = DateUtil.dateCountFromBaseDate(
+        this.managementBeginDate,
+        DateUtil.yyyymmddFromDate(new Date())) * this.gridXX + (this.gridXX / 2)
+      return {
+        transform: `translateX(${x}px)`
+      }
+    },
+
+    timelineContainerGridClass() {
+      return `d${(14 - this.grid.startManagementDay) % 7} z${this.zoom}`
+    },
+
+    timelineTasks() {
+      if(this.tasks) {
+        const objs = []
+        this.tasks.forEach(t => {
+          objs.push(t)
+          const children = t.children.filter(c => c.show)
+          if(children.length > 0) {
+            Array.prototype.push.apply(objs, children)
+          }
+        })
+        return objs
+      }
+      return []
+    },
+
+    resourceSelectedAssignee() {
+      const rr = this.resource.select
+      return rr.length > 0 ? rr[0] : null
+    },
+
+
+    /**
+     * root task を単一選択
+     */
+    isSelectProjectTaskItem() {
+      return this.tasks
+        .filter(t => t.select).length === 1
+    },
+    selectedProjectTaskItem() {
+      if(!this.isSelectProjectTaskItem) {
+        return null
+      }
+      return this.tasks
+        .filter(t => t.select)[0]
+    },
+
+    /**
+     * root, task 問わず一つ以上選択
+     */
+    isSelectTaskItems() {
+      return this.timelineTasks
+        .filter(t => t.select).length > 0
+    },
+
+    /**
+     * task を一つ選択
+     */
+    isSelectTaskItem() {
+      return this.tasks
+        .flatMap(t => t.children)
+        .filter(t => t.select).length === 1
+    },
+    selectedTaskItem() {
+      if(!this.isSelectTaskItem) {
+        return null
+      }
+      return this.tasks
+        .flatMap(t => t.children)
+        .filter(t => t.select)[0]
+    },
+
+    myTodoCount() {
+      const todos = this.todoStore?.todos || []
+      if(todos.length === 0) {
+        return 0
+      }
+      return this.todoStore.todos.filter(todo => todo.assigneeId == this.$auth.user.id).length
+    }
+  },
+
   async mounted () {
     window.addEventListener('resize', this.onResizeWindow)
     document.querySelector('.tasks-pane')?.addEventListener('scroll', this.onScrollTasksPane)
@@ -418,12 +627,14 @@ export default Vue.extend({
 
     this.initSocket()
   },
+
   destroyed () {
     window.removeEventListener('resize', this.onResizeWindow)
     document.querySelector('.timelines-pane')?.removeEventListener('scroll', this.onScrollTimelinesPane)
     document.querySelector('.tasks-pane')?.removeEventListener('scroll', this.onScrollTasksPane)
     this.disposeSocket()
   },
+
   methods: {
     initSocket() {
       this.socket = io(this.$config.apiServer)
@@ -827,6 +1038,21 @@ export default Vue.extend({
         this.taskDetail.showDialog = true
       }
     },
+    onUpdateTaskDetail(o) {
+      // project, task から操作タスクを探す
+      let task = this.tasks.find(t => t.id === o.id)
+      if(!task) {
+        task = this.tasks.flatMap(t => t.children).find(t => t.id === o.id)
+      }
+      // 詳細有無更新 ＋ 更新されていたら emit
+      if(task) {
+        const hasDetail = task.hasDetail
+        task.hasDetail = (o.content !== '<p></p>')
+        if(task.hasDetail !== hasDetail) {
+          this.emitTasks()
+        }
+      }
+    },
 
     onBeforeMoveTaskItem({ dragItem, pathFrom, pathTo }) {
       // task <-> project の移動はできない
@@ -1080,208 +1306,6 @@ export default Vue.extend({
     onResizeMainContainer(e) {
       this.updateResouceContainerHeight()
     },
-  },
-  computed: {
-    holidayStore() {
-      return getModule(HolidayStore, this.$store)
-    },
-    groupStore() {
-      return getModule(GroupStore, this.$store)
-    },
-    resourceStore() {
-      return getModule(ResourceStore, this.$store)
-    },
-    taskRecordStore() {
-      return getModule(TaskRecordStore, this.$store)
-    },
-    todoStore() {
-      return getModule(TodoStore, this.$store)
-    },
-    configStore() {
-      return getModule(ConfigStore, this.$store)
-    },
-
-    config: {
-      get() {
-        const _managementBeginDate = dateformat(this.managementBeginDate, 'yyyy-mm')
-        return this.configStore?.config || {
-          closeProjects: [],
-          managementBeginDate: _managementBeginDate
-        }
-      },
-      set(v) {
-        this.configStore.setConfig(v)
-      }
-    },
-
-    resources() {
-      return this.resourceStore?.resources || []
-    },
-
-    holidays() {
-      return this.holidayStore?.holidayDates || []
-    },
-
-    grid() {
-      const dates = []
-      const amountOfDates = []
-      let amount = 0
-      for(let i = 1; i <= 18; i++) {
-        const d = new Date(this.managementBeginDate)
-        d.setMonth(d.getMonth() + i)
-        d.setDate(0)
-        dates.push(d.getDate())
-        amount += d.getDate()
-        amountOfDates.push(amount)
-      }
-      let startManagementDay = this.managementBeginDate.getDay()
-      console.log(startManagementDay)
-      return {
-        dates,
-        amountOfDates,
-        startManagementDay
-      }
-    },
-    gridXX() {
-      return this.gridX * this.zoom
-    },
-    zoom() {
-      return this.config?.zoom || 1
-    },
-    timelineMaxWidth() {
-      return this.gridXX * this.timelineMaxTerm
-    },
-
-    /**
-     * 月曜日を算出
-     */
-    timelineHeaderMondays() {
-      const mondays = []
-      let x = (8 - this.managementBeginDate.getDay()) % 7
-      const d = new Date(this.managementBeginDate)
-      d.setDate(d.getDate() + x)
-      for(let i = 0; i < this.timelineMaxTerm / 7; i++) {
-        mondays.push({
-          x: x * this.gridXX,
-          date: d.getDate()
-        })
-        x += 7
-        d.setDate(d.getDate() + 7)
-      }
-      return mondays
-    },
-
-    timelineToday() {
-      const x = DateUtil.dateCountFromBaseDate(
-        this.managementBeginDate,
-        DateUtil.yyyymmddFromDate(new Date())) * this.gridXX + (this.gridXX / 2)
-      return {
-        transform: `translateX(${x}px)`
-      }
-    },
-
-    timelineContainerGridClass() {
-      return `d${(14 - this.grid.startManagementDay) % 7} z${this.zoom}`
-    },
-
-    timelineTasks() {
-      if(this.tasks) {
-        const objs = []
-        this.tasks.forEach(t => {
-          objs.push(t)
-          const children = t.children.filter(c => c.show)
-          if(children.length > 0) {
-            Array.prototype.push.apply(objs, children)
-          }
-        })
-        return objs
-      }
-      return []
-    },
-
-    resourceSelectedAssignee() {
-      const rr = this.resource.select
-      return rr.length > 0 ? rr[0] : null
-    },
-
-
-    /**
-     * root task を単一選択
-     */
-    isSelectProjectTaskItem() {
-      return this.tasks
-        .filter(t => t.select).length === 1
-    },
-    selectedProjectTaskItem() {
-      if(!this.isSelectProjectTaskItem) {
-        return null
-      }
-      return this.tasks
-        .filter(t => t.select)[0]
-    },
-
-    /**
-     * root, task 問わず一つ以上選択
-     */
-    isSelectTaskItems() {
-      return this.timelineTasks
-        .filter(t => t.select).length > 0
-    },
-
-    /**
-     * task を一つ選択
-     */
-    isSelectTaskItem() {
-      return this.tasks
-        .flatMap(t => t.children)
-        .filter(t => t.select).length === 1
-    },
-    selectedTaskItem() {
-      if(!this.isSelectTaskItem) {
-        return null
-      }
-      return this.tasks
-        .flatMap(t => t.children)
-        .filter(t => t.select)[0]
-    },
-
-    myTodoCount() {
-      const todos = this.todoStore?.todos || []
-      if(todos.length === 0) {
-        return 0
-      }
-      return this.todoStore.todos.filter(todo => todo.assigneeId == this.$auth.user.id).length
-    }
-  },
-  filters: {
-    endDate(t) {
-      return DateUtil.yyyymmddFormDateCount(t.beginDate, t.plan - 1)
-    },
-
-    mmdd(d) {
-      const { mm, dd } = DateUtil.yyyymmddObject(d)
-      return `${mm.toString().padStart(2, '0')}/${dd.toString().padStart(2, '0')}`
-    },
-    mm(d) {
-      return dateformat(d, 'mm')
-    },
-    workloadUnit(v) {
-      return DateUtil.workloadUnit(v)
-    },
-    resourceName(r) {
-      return r?.name || ''
-    },
-    timelineTaskName(t) {
-      return t.name
-    },
-    timelineTaskAssgnees(t) {
-      return Array.from(new Set([ t.assignee, ...t.children.map(tt => tt.assignee) ]))
-              .filter(r => r?.name)
-              .map(r => r?.name).join(',')
-    },
-    projectShowIcon(t) {
-      return t.showChildren ? 'mdi-eye' : 'mdi-eye-off'
-    }
   }
 })
 </script>

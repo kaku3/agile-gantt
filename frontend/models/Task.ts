@@ -22,6 +22,7 @@ export interface TaskEntity {
   select: boolean
   showChildren: boolean
   show: boolean
+  hasDetail: boolean
 }
 
 export interface TaskRecord {
@@ -35,6 +36,7 @@ export interface TaskRecord {
   progress: number
   beginDate: number // yyyymmww
   parentId: number
+  hasDetail: boolean
 }
 
 export function newTaskEntity(id: number): TaskEntity {
@@ -61,7 +63,8 @@ export function newTaskEntity(id: number): TaskEntity {
     parent: null,
     select: false,
     showChildren: true,
-    show: true
+    show: true,
+    hasDetail: false
   }
 }
 
@@ -81,7 +84,8 @@ export function cloneTaskEntity(id: number, o: TaskEntity): TaskEntity {
     parent: o.parent,
     select: false,
     showChildren: o.showChildren,
-    show: o.show
+    show: o.show,
+    hasDetail: false  // clone は memo を持たない
   }
   return t;
 }
