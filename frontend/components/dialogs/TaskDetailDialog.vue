@@ -134,12 +134,13 @@ export default {
     async load (id) {
       console.log(`+ load(${id})`)
       const { data } = await this.$axios.get(`/tasks/${id}`)
-      console.log(data.content)
-      data.content += `<p><strong>${dateformat(new Date(), 'yyyy-mm-dd HH:MM')}</strong></p><p></p>`
-      this.content = data.content
 
       // focus を当てて、最下行にカーソルを異動
       this.$nextTick(() => {
+        console.log(data.content)
+        data.content += `<p><strong>${dateformat(new Date(), 'yyyy-mm-dd HH:MM')}</strong></p><p></p>`
+        this.content = data.content
+
         const c = document.querySelector('[component-class=task-detail-dialog] .tiptap-vuetify-editor .tiptap-vuetify-editor__content')
         const e = document.querySelector('[component-class=task-detail-dialog] .tiptap-vuetify-editor .tiptap-vuetify-editor__content .ProseMirror')
         e.focus()
@@ -154,14 +155,15 @@ export default {
         selection.addRange(range)
 
         c.scrollTop = c.scrollHeight
+        console.log(`- load(${id})`)
       })
     },
     async save(id) {
-      console.log(`+ save(${id})`)
+      console.log('+ save()', id, this.content)
+      this.$emit('update', { id, content: this.content })
       await this.$axios.post(`/tasks/${id}`, {
         content: this.content
       })
-      this.$emit('update', { id, content: this.content })
     }
   },
 

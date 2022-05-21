@@ -111,7 +111,8 @@ export function toTaskRecords(tasks:TaskEntity[]) {
       assignRate: o.assignRate,
       progress: o.progress,
       beginDate: o.beginDate,
-      parentId: o.parent?.id
+      parentId: o.parent?.id,
+      hasDetail: o.hasDetail
     })
   })
   return _tasks;

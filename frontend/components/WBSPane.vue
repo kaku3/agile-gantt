@@ -1097,7 +1097,6 @@ export default Vue.extend({
       }
     },
     onUpdateTaskAssignee() {
-      debugger
       this.taskAssigneeSelectMenu.task.assignee =
         this.taskAssigneeSelectMenu.select ?
           this.resources.find(r => r.id === this.taskAssigneeSelectMenu.select) :
